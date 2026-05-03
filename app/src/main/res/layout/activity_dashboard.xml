@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_soft"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/section_background"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tank Dashboard"
+                    android:textColor="@color/text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Live readings and quick controls"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/alertBanner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/banner_alert"
+                android:text="Alert active"
+                android:textColor="@color/alert_red"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:columnCount="2"
+                android:useDefaultMargins="true">
+
+                <LinearLayout
+                    android:id="@+id/tempCard"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/card_background"
+                    android:orientation="vertical">
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Temperature" android:textColor="@color/text_secondary" android:textStyle="bold" />
+                    <TextView android:id="@+id/tempText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="-- C" android:textColor="@color/text_primary" android:textSize="26sp" android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/salCard"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/card_background"
+                    android:orientation="vertical">
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Salinity/TDS" android:textColor="@color/text_secondary" android:textStyle="bold" />
+                    <TextView android:id="@+id/salText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="-- ppm" android:textColor="@color/text_primary" android:textSize="26sp" android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/turbCard"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/card_background"
+                    android:orientation="vertical">
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Turbidity" android:textColor="@color/text_secondary" android:textStyle="bold" />
+                    <TextView android:id="@+id/turbText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="-- NTU" android:textColor="@color/text_primary" android:textSize="26sp" android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/waterCard"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/card_background"
+                    android:orientation="vertical">
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Water Level" android:textColor="@color/text_secondary" android:textStyle="bold" />
+                    <TextView android:id="@+id/waterText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="-- cm" android:textColor="@color/text_primary" android:textSize="26sp" android:textStyle="bold" />
+                </LinearLayout>
+            </GridLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="Controls"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <Switch android:id="@+id/pumpSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Pump" android:textColor="@color/text_primary" />
+            <Switch android:id="@+id/filterSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Filter" android:textColor="@color/text_primary" />
+            <Switch android:id="@+id/aeratorSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Aerator" android:textColor="@color/text_primary" />
+            <Button android:id="@+id/feedButton" style="@style/ShrimpHubButton" android:layout_width="match_parent" android:layout_height="52dp" android:text="Feed Now" />
+        </LinearLayout>
+    </ScrollView>
+
+    <include layout="@layout/bottom_nav" />
+</LinearLayout>

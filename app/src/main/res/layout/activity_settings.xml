@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_soft"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/section_background"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Settings"
+                    android:textColor="@color/text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Adjust thresholds used by the ESP32"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <EditText android:id="@+id/maxTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp" android:hint="Max Temperature" android:inputType="numberDecimal" />
+            <EditText android:id="@+id/minTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Temperature" android:inputType="numberDecimal" />
+            <EditText android:id="@+id/minSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Salinity" android:inputType="number" />
+            <EditText android:id="@+id/maxSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max Salinity" android:inputType="number" />
+            <EditText android:id="@+id/maxTurbInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max Turbidity" android:inputType="numberDecimal" />
+            <EditText android:id="@+id/feedTimeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:focusable="false" android:hint="Feed Time" android:inputType="none" />
+            <EditText android:id="@+id/overflowInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Overflow Limit (cm)" android:inputType="numberDecimal" />
+            <EditText android:id="@+id/targetHarvestInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Target Harvest Days" android:inputType="number" />
+
+            <Button
+                android:id="@+id/saveSettingsButton"
+                style="@style/ShrimpHubButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="18dp"
+                android:text="Save Settings" />
+
+            <Button
+                android:id="@+id/logoutButton"
+                style="@style/ShrimpHubButton.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
+                android:text="Logout" />
+        </LinearLayout>
+    </ScrollView>
+
+    <include layout="@layout/bottom_nav" />
+</LinearLayout>

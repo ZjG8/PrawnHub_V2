@@ -1,0 +1,47 @@
+{
+  "aquarium": {
+    "temp_val": 0.0,
+    "tds_val": 0,
+    "turb_val": 0,
+    "water_lvl": 0.0,
+    "last_sync": ""
+  },
+  "settings": {
+    "max_temp": 32.0,
+    "min_temp": 28.0,
+    "min_sal": 15,
+    "max_sal": 25,
+    "max_turb": 45,
+    "feed_time": "08:00",
+    "overflow_limit": 5.0,
+    "target_harvest_days": 75
+  },
+  "control": {
+    "pump_stat": false,
+    "filter_stat": false,
+    "motor_trig": false,
+    "aerator_stat": false,
+    "op_mode": "auto"
+  },
+  "history": {
+    "placeholder": {
+      "log_id": "init",
+      "timestamp": "2025-01-01 00:00:00",
+      "param_type": "temp",
+      "rec_val": 0.0
+    }
+  },
+  "alerts": {
+    "ammonia_risk": false,
+    "overflow_risk": false,
+    "temp_alert": false,
+    "sal_alert": false
+  },
+  "growth": {
+    "start_date": "",
+    "days_of_culture": 0,
+    "target_harvest_days": 75,
+    "days_in_optimal_temp": 0,
+    "performance_score": 0.0
+  }
+}

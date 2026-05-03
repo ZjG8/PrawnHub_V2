@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1013075898878",
+    "project_id": "prawnhub-a5eca",
+    "storage_bucket": "prawnhub-a5eca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013075898878:android:6423473049c3c0111110af",
+        "android_client_info": {
+          "package_name": "com.example.prawnhub_v2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrdRxa7PuJX5XOtC2_WjAQoNHYy1cFjkA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
