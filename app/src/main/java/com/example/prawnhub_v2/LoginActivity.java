@@ -29,6 +29,11 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.passwordInput);
         errorText = findViewById(R.id.errorText);
         loginButton = findViewById(R.id.loginButton);
+        TextView roleText = findViewById(R.id.roleText);
+        Button backButton = findViewById(R.id.backButton);
+        String role = getIntent().getStringExtra(RoleSelectionActivity.EXTRA_ROLE);
+        roleText.setText("Continue as " + (TextUtils.isEmpty(role) ? "Farmer" : role));
+        backButton.setOnClickListener(view -> finish());
 
         if (auth.getCurrentUser() != null) {
             openDashboard();

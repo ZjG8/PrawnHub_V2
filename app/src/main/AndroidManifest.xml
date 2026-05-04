@@ -15,12 +15,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PrawnHub_V2">
 
+        <activity android:name=".AboutActivity" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".GrowthActivity" />
         <activity android:name=".HistoryActivity" />
         <activity android:name=".DashboardActivity" />
+        <activity android:name=".RoleSelectionActivity" />
         <activity
-            android:name=".LoginActivity"
+            android:name=".LoginActivity" />
+        <activity
+            android:name=".WelcomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

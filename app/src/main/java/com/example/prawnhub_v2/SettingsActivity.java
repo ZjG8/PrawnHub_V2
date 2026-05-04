@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -52,12 +53,18 @@ public class SettingsActivity extends BaseNavActivity {
         feedTimeInput = findViewById(R.id.feedTimeInput);
         overflowInput = findViewById(R.id.overflowInput);
         targetHarvestInput = findViewById(R.id.targetHarvestInput);
+        TextView accountEmailText = findViewById(R.id.accountEmailText);
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            accountEmailText.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
+        }
         Button saveButton = findViewById(R.id.saveSettingsButton);
         Button logoutButton = findViewById(R.id.logoutButton);
+        Button aboutButton = findViewById(R.id.aboutButton);
 
         feedTimeInput.setOnClickListener(view -> showTimePicker());
         saveButton.setOnClickListener(view -> saveSettings());
         logoutButton.setOnClickListener(view -> logout());
+        aboutButton.setOnClickListener(view -> startActivity(new Intent(this, AboutActivity.class)));
     }
 
     private void loadSettings() {

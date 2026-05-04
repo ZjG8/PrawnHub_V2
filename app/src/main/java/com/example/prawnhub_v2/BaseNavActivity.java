@@ -6,6 +6,7 @@ import android.widget.Button;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 public abstract class BaseNavActivity extends AppCompatActivity {
     @Override
@@ -24,6 +25,12 @@ public abstract class BaseNavActivity extends AppCompatActivity {
         Button button = findViewById(buttonId);
         if (button == null) {
             return;
+        }
+        boolean selected = getClass().equals(target);
+        button.setSelected(selected);
+        button.setTextColor(ContextCompat.getColor(this, selected ? R.color.brand_primary_dark : R.color.text_secondary));
+        if (selected) {
+            button.setBackgroundResource(R.drawable.nav_selected);
         }
         button.setOnClickListener(view -> {
             if (getClass().equals(target)) {

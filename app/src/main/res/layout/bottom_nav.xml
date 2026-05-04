@@ -10,8 +10,8 @@
     android:paddingRight="8dp"
     android:paddingBottom="10dp">
 
-    <Button android:id="@+id/navDashboard" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Dashboard" android:textSize="12sp" />
-    <Button android:id="@+id/navHistory" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="History" android:textSize="12sp" />
-    <Button android:id="@+id/navGrowth" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Growth" android:textSize="12sp" />
-    <Button android:id="@+id/navSettings" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Settings" android:textSize="12sp" />
+    <Button android:id="@+id/navDashboard" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Dashboard" android:textSize="11sp" />
+    <Button android:id="@+id/navHistory" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="History" android:textSize="11sp" />
+    <Button android:id="@+id/navGrowth" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Growth" android:textSize="11sp" />
+    <Button android:id="@+id/navSettings" style="@style/ShrimpHubButton.Nav" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Settings" android:textSize="11sp" />
 </LinearLayout>
