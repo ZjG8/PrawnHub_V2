@@ -1,13 +1,20 @@
 package com.example.prawnhub_v2;
 
 import android.app.DatePickerDialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -18,6 +25,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +37,9 @@ public class GrowthActivity extends BaseNavActivity {
     private TextView targetText;
     private TextView scoreText;
     private TextView statusBadge;
+    private TextView recommendationsText;
+    private ProgressBar healthProgress;
+    private LineChart growthChart;
     private int targetDays = 75;
     private int optimalDays = 0;
 
@@ -42,11 +54,24 @@ public class GrowthActivity extends BaseNavActivity {
         targetText = findViewById(R.id.targetText);
         scoreText = findViewById(R.id.scoreText);
         statusBadge = findViewById(R.id.statusBadge);
+        recommendationsText = findViewById(R.id.recommendationsText);
+        healthProgress = findViewById(R.id.healthProgress);
+        growthChart = findViewById(R.id.growthChart);
         Button setStartDateButton = findViewById(R.id.setStartDateButton);
         setStartDateButton.setOnClickListener(view -> showDatePicker());
 
+        setupChart();
         listenToSettings();
         listenToGrowth();
+        listenToSensorHealth();
+        listenToTrend();
+    }
+
+    private void setupChart() {
+        growthChart.setNoDataText("Waiting for Firebase growth trend data.");
+        Description description = new Description();
+        description.setText("Weekly growth health");
+        growthChart.setDescription(description);
     }
 
     private void listenToSettings() {
@@ -55,7 +80,7 @@ public class GrowthActivity extends BaseNavActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Number value = snapshot.getValue(Number.class);
                 targetDays = value == null ? 75 : value.intValue();
-                targetText.setText("Target harvest: " + targetDays + " days");
+                targetText.setText("Harvest readiness is calculated automatically from growth and water quality.");
             }
 
             @Override
@@ -103,6 +128,7 @@ public class GrowthActivity extends BaseNavActivity {
     private void renderGrowth(int cultureDays) {
         daysText.setText(cultureDays + " days");
         targetText.setText("Target harvest: " + targetDays + " days");
+        targetText.setText("Harvest readiness is calculated automatically from growth and water quality.");
 
         float score = 0f;
         if (cultureDays > 0) {
@@ -110,7 +136,71 @@ public class GrowthActivity extends BaseNavActivity {
             score = Math.min(100f, Math.max(0f, score));
         }
         database.child("growth").child("performance_score").setValue(score);
-        scoreText.setText(String.format("Performance score: %.0f%%", score));
+        renderHealth(score);
+    }
+
+    private void listenToSensorHealth() {
+        database.child("aquarium").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                float temp = getFloat(snapshot, "temp_val", 30f);
+                float salinity = getFloat(snapshot, "tds_val", 20f);
+                float turbidity = getFloat(snapshot, "turb_val", 0f);
+                float oxygen = getFloat(snapshot, "oxygen_val", getFloat(snapshot, "do_val", 6f));
+                float ph = getFloat(snapshot, "ph_val", 7.5f);
+                int issues = 0;
+                if (temp < 28f || temp > 32f) issues++;
+                if (salinity < 15f || salinity > 25f) issues++;
+                if (turbidity > 45f) issues++;
+                if (oxygen < 5f) issues++;
+                if (ph < 6.5f || ph > 8.5f) issues++;
+                float score = Math.max(0f, 100f - (issues * 18f));
+                database.child("growth").child("water_quality_score").setValue(score);
+                renderHealth(score);
+                recommendationsText.setText(buildRecommendations(temp, salinity, turbidity, oxygen, ph));
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(GrowthActivity.this, "Sensor listener failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void listenToTrend() {
+        database.child("growth_trend").limitToLast(7).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Entry> entries = new ArrayList<>();
+                int index = 0;
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    Number value = child.child("score").getValue(Number.class);
+                    if (value == null) {
+                        value = child.getValue(Number.class);
+                    }
+                    if (value != null) {
+                        entries.add(new Entry(index++, value.floatValue()));
+                    }
+                }
+                LineDataSet dataSet = new LineDataSet(entries, "Growth health");
+                dataSet.setColor(Color.rgb(0, 108, 103));
+                dataSet.setCircleColor(Color.rgb(242, 140, 111));
+                dataSet.setLineWidth(2f);
+                dataSet.setCircleRadius(4f);
+                growthChart.setData(new LineData(dataSet));
+                growthChart.invalidate();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(GrowthActivity.this, "Trend listener failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void renderHealth(float score) {
+        healthProgress.setProgress(Math.round(score));
+        scoreText.setText(String.format(Locale.US, "%.0f%% health", score));
 
         if (score >= 80f) {
             statusBadge.setText("On Track - Excellent conditions!");
@@ -122,6 +212,21 @@ public class GrowthActivity extends BaseNavActivity {
             statusBadge.setText("Needs Attention - Check parameters now.");
             statusBadge.setBackgroundResource(R.drawable.badge_red);
         }
+    }
+
+    private String buildRecommendations(float temp, float salinity, float turbidity, float oxygen, float ph) {
+        StringBuilder builder = new StringBuilder();
+        if (oxygen < 5f) builder.append("Maintain oxygen level. ");
+        if (salinity < 15f || salinity > 25f) builder.append("Reduce salinity variation. ");
+        if (turbidity > 45f) builder.append("Monitor turbidity and filtration. ");
+        if (temp < 28f || temp > 32f) builder.append("Keep temperature within target range. ");
+        if (ph < 6.5f || ph > 8.5f) builder.append("Correct pH balance. ");
+        return builder.length() == 0 ? "Maintain oxygen level, stable salinity, and clear water conditions." : builder.toString().trim();
+    }
+
+    private float getFloat(DataSnapshot snapshot, String key, float fallback) {
+        Number value = snapshot.child(key).getValue(Number.class);
+        return value == null ? fallback : value.floatValue();
     }
 
     private void showDatePicker() {

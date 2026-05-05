@@ -25,7 +25,7 @@
             android:layout_height="104dp"
             android:layout_marginTop="18dp"
             android:contentDescription="PrawnHub logo"
-            android:src="@drawable/logo_mark" />
+            android:src="@drawable/prawnhub_logo" />
 
         <TextView
             android:layout_width="match_parent"
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:gravity="center"
-            android:text="Version 2.0"
+            android:text="Version 1.0"
             android:textColor="@color/text_secondary"
             android:textSize="15sp" />
 
@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:background="@drawable/card_background"
-            android:text="Developed By\nBSIT Students\nPolytechnic University"
+            android:text="Developed By\nZj Gilbuena\nMikko Garduna\nJovin Barretto\nFranz Velasco\n\nSchool\nPolytechnic University of the Philippines Lopez, Quezon Branch"
             android:textColor="@color/text_primary"
             android:textSize="16sp" />
 

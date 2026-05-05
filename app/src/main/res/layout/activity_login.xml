@@ -24,7 +24,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="18dp"
             android:contentDescription="PrawnHub logo"
-            android:src="@drawable/logo_mark" />
+            android:src="@drawable/prawnhub_logo" />
 
         <TextView
             android:layout_width="match_parent"
@@ -84,15 +84,13 @@
             android:hint="Enter your password"
             android:inputType="textPassword" />
 
-        <TextView
+        <Button
+            android:id="@+id/showPasswordButton"
+            style="@style/ShrimpHubButton.Nav"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:gravity="center"
-            android:text="Forgot Password?"
-            android:textColor="@color/brand_primary_dark"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:text="Show Password" />
 
         <Button
             android:id="@+id/loginButton"
@@ -111,13 +109,20 @@
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <TextView
+        <Button
+            android:id="@+id/forgotPasswordButton"
+            style="@style/ShrimpHubButton.Nav"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:gravity="center"
-            android:text="Don't have account? Sign Up"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
+            android:layout_height="48dp"
+            android:layout_marginTop="14dp"
+            android:text="Forgot Password?" />
+
+        <Button
+            android:id="@+id/signUpButton"
+            style="@style/ShrimpHubButton.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:text="Create Account" />
     </LinearLayout>
 </ScrollView>

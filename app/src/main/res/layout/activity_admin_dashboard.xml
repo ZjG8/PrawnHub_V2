@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_soft"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/avatar_background"
+                android:gravity="center"
+                android:text="A"
+                android:textColor="@color/brand_primary_dark"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Admin Dashboard"
+                android:textColor="@color/text_primary"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="PrawnHub logo"
+                android:src="@drawable/prawnhub_logo" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/adminSyncText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/card_background"
+            android:text="Sync status loading..."
+            android:textColor="@color/text_primary"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/manageUsersButton"
+            style="@style/ShrimpHubButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="16dp"
+            android:text="Manage User Accounts" />
+
+        <Button
+            android:id="@+id/diagnosticsButton"
+            style="@style/ShrimpHubButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="System Diagnostics" />
+
+        <Button
+            android:id="@+id/reportsButton"
+            style="@style/ShrimpHubButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="Farm Reports" />
+
+        <Button
+            android:id="@+id/thresholdsButton"
+            style="@style/ShrimpHubButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="Sensor Threshold Settings" />
+
+        <Button
+            android:id="@+id/systemSettingsButton"
+            style="@style/ShrimpHubButton.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:text="System Settings" />
+
+        <Button
+            android:id="@+id/logoutButton"
+            style="@style/ShrimpHubButton.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="18dp"
+            android:text="Logout" />
+    </LinearLayout>
+</ScrollView>

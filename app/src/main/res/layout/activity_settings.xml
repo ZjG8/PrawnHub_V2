@@ -17,6 +17,7 @@
             android:padding="16dp">
 
             <TextView
+                android:id="@+id/settingsTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Settings"
@@ -66,11 +67,15 @@
 
                 <EditText android:id="@+id/maxTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp" android:hint="Max Temperature" android:inputType="numberDecimal" />
                 <EditText android:id="@+id/minTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Temperature" android:inputType="numberDecimal" />
+                <EditText android:id="@+id/pondSizeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Pond Size" android:inputType="numberDecimal" />
+                <EditText android:id="@+id/shrimpTypeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Shrimp Type" android:inputType="textCapWords" />
                 <EditText android:id="@+id/minSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Salinity" android:inputType="number" />
                 <EditText android:id="@+id/maxSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max Salinity" android:inputType="number" />
                 <EditText android:id="@+id/maxTurbInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max Turbidity" android:inputType="numberDecimal" />
+                <EditText android:id="@+id/minOxygenInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Oxygen" android:inputType="numberDecimal" />
+                <EditText android:id="@+id/minPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min pH" android:inputType="numberDecimal" />
+                <EditText android:id="@+id/maxPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max pH" android:inputType="numberDecimal" />
                 <EditText android:id="@+id/overflowInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Overflow Limit (cm)" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/targetHarvestInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Target Harvest Days" android:inputType="number" />
             </LinearLayout>
 
             <LinearLayout
@@ -88,15 +93,29 @@
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <EditText android:id="@+id/feedTimeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp" android:focusable="false" android:hint="Feed Time" android:inputType="none" />
+                <Switch android:id="@+id/soundSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:text="Sound alert" android:textColor="@color/text_primary" />
+                <Switch android:id="@+id/vibrateSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Vibrate" android:textColor="@color/text_primary" />
+                <Switch android:id="@+id/pushSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Push notifications" android:textColor="@color/text_primary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Alerts ON - Sound ON"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="15sp" />
+                    android:text="Feeding Automation"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <EditText android:id="@+id/feedTimeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp" android:focusable="false" android:hint="First Feed Time" android:inputType="none" />
+                <EditText android:id="@+id/feedIntervalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Feeding Interval Hours" android:inputType="number" />
+                <Switch android:id="@+id/midnightFeedSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:text="Auto-feed during sleep mode" android:textColor="@color/text_primary" />
             </LinearLayout>
 
             <Button

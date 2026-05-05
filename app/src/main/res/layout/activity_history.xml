@@ -12,38 +12,53 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <Button
+            android:id="@+id/backButton"
+            style="@style/ShrimpHubButton.Nav"
+            android:layout_width="112dp"
+            android:layout_height="48dp"
+            android:text="Back" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:text="History"
             android:textColor="@color/text_primary"
             android:textSize="28sp"
             android:textStyle="bold" />
 
-        <HorizontalScrollView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:scrollbars="none">
+            android:orientation="horizontal">
 
-            <RadioGroup
-                android:id="@+id/filterGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+            <Spinner
+                android:id="@+id/rangeSpinner"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:background="@drawable/dropdown_background"
+                android:paddingLeft="16dp"
+                android:paddingRight="40dp" />
 
-                <RadioButton android:id="@+id/filterTemp" android:layout_width="wrap_content" android:layout_height="48dp" android:background="@drawable/chip_selected" android:button="@null" android:checked="true" android:paddingLeft="18dp" android:paddingRight="18dp" android:text="Temperature" android:textColor="@color/text_primary" />
-                <RadioButton android:id="@+id/filterSalinity" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginLeft="8dp" android:background="@drawable/card_background" android:button="@null" android:paddingLeft="18dp" android:paddingRight="18dp" android:text="Salinity" android:textColor="@color/text_primary" />
-                <RadioButton android:id="@+id/filterTurbidity" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginLeft="8dp" android:background="@drawable/card_background" android:button="@null" android:paddingLeft="18dp" android:paddingRight="18dp" android:text="Turbidity" android:textColor="@color/text_primary" />
-                <RadioButton android:id="@+id/filterWater" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginLeft="8dp" android:background="@drawable/card_background" android:button="@null" android:paddingLeft="18dp" android:paddingRight="18dp" android:text="Water Level" android:textColor="@color/text_primary" />
-            </RadioGroup>
-        </HorizontalScrollView>
+            <Spinner
+                android:id="@+id/sensorSpinner"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginLeft="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/dropdown_background"
+                android:paddingLeft="16dp"
+                android:paddingRight="40dp" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="Today"
+            android:text="Important Events"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:textStyle="bold" />

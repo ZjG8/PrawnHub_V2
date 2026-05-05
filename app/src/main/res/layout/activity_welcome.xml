@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface_soft"
+    android:background="@drawable/welcome_gradient"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="28dp">
@@ -16,7 +16,7 @@
         android:layout_width="116dp"
         android:layout_height="116dp"
         android:contentDescription="PrawnHub logo"
-        android:src="@drawable/logo_mark" />
+        android:src="@drawable/prawnhub_logo" />
 
     <TextView
         android:layout_width="match_parent"
@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:gravity="center"
-        android:text="Monitor - Analyze - Grow"
+        android:text="Monitor • Analyze • Grow"
         android:textColor="@color/text_primary"
         android:textSize="15sp"
         android:textStyle="bold" />

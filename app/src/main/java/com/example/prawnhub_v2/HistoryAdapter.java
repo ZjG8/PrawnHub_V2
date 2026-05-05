@@ -32,6 +32,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         holder.parameter.setText(formatParameter(item.parameter));
         holder.timestamp.setText(item.timestamp);
         holder.value.setText(String.format("%.2f", item.value));
+        holder.status.setText(item.status);
     }
 
     @Override
@@ -50,12 +51,14 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         final TextView parameter;
         final TextView timestamp;
         final TextView value;
+        final TextView status;
 
         HistoryViewHolder(@NonNull View itemView) {
             super(itemView);
             parameter = itemView.findViewById(R.id.historyParam);
             timestamp = itemView.findViewById(R.id.historyTimestamp);
             value = itemView.findViewById(R.id.historyValue);
+            status = itemView.findViewById(R.id.historyStatus);
         }
     }
 }
