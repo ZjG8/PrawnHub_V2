@@ -12,7 +12,7 @@ public final class SessionStore {
 
     public static void setRole(Context context, String role) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        prefs.edit().putString(KEY_ROLE, role == null ? "" : role).apply();
+        prefs.edit().putString(KEY_ROLE, role == null ? "" : role).commit();
     }
 
     public static String getRole(Context context) {
@@ -23,6 +23,6 @@ public final class SessionStore {
 
     public static void clear(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        prefs.edit().remove(KEY_ROLE).apply();
+        prefs.edit().remove(KEY_ROLE).commit();
     }
 }

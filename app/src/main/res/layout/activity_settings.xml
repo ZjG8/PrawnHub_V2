@@ -16,19 +16,43 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
-                android:id="@+id/settingsTitle"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Settings"
-                android:textColor="@color/text_primary"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/backButton"
+                    style="@style/ShrimpHubButton.Nav"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:contentDescription="Back"
+                    android:text="&lt;"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/settingsTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="Settings"
+                    android:textColor="@color/text_primary"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="PrawnHub logo"
+                    android:src="@drawable/prawnhub_logo" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/card_background"
                 android:orientation="vertical">
 
@@ -65,17 +89,56 @@
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <EditText android:id="@+id/maxTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp" android:hint="Max Temperature" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/minTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Temperature" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/pondSizeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Pond Size" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/shrimpTypeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Shrimp Type" android:inputType="textCapWords" />
-                <EditText android:id="@+id/minSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Salinity" android:inputType="number" />
-                <EditText android:id="@+id/maxSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max Salinity" android:inputType="number" />
-                <EditText android:id="@+id/maxTurbInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max Turbidity" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/minOxygenInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min Oxygen" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/minPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Min pH" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/maxPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Max pH" android:inputType="numberDecimal" />
-                <EditText android:id="@+id/overflowInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Overflow Limit (cm)" android:inputType="numberDecimal" />
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Max Temperature" />
+                <EditText android:id="@+id/maxTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max Temperature" android:inputType="numberDecimal" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min Temperature" />
+                <EditText android:id="@+id/minTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min Temperature" android:inputType="numberDecimal" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Max Salinity" />
+                <EditText android:id="@+id/maxSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max Salinity" android:inputType="number" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min Salinity" />
+                <EditText android:id="@+id/minSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min Salinity" android:inputType="number" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Max Turbidity" />
+                <EditText android:id="@+id/maxTurbInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max Turbidity" android:inputType="numberDecimal" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min Oxygen" />
+                <EditText android:id="@+id/minOxygenInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min Oxygen" android:inputType="numberDecimal" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Max pH" />
+                <EditText android:id="@+id/maxPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max pH" android:inputType="numberDecimal" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min pH" />
+                <EditText android:id="@+id/minPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min pH" android:inputType="numberDecimal" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Overflow Limit" />
+                <EditText android:id="@+id/overflowInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Overflow Limit" android:inputType="numberDecimal" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Feeding Automation"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Feed Time" />
+                <EditText android:id="@+id/feedTimeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:focusable="false" android:hint="Feed Time" android:inputType="none" />
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Feeding Interval" />
+                <EditText android:id="@+id/feedIntervalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Feeding Interval" android:inputType="number" />
+
+                <Switch android:id="@+id/midnightFeedSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:text="Auto-feed during sleep mode" android:textColor="@color/text_primary" />
             </LinearLayout>
 
             <LinearLayout
@@ -98,26 +161,6 @@
                 <Switch android:id="@+id/pushSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Push notifications" android:textColor="@color/text_primary" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/card_background"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Feeding Automation"
-                    android:textColor="@color/text_primary"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <EditText android:id="@+id/feedTimeInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp" android:focusable="false" android:hint="First Feed Time" android:inputType="none" />
-                <EditText android:id="@+id/feedIntervalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Feeding Interval Hours" android:inputType="number" />
-                <Switch android:id="@+id/midnightFeedSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:text="Auto-feed during sleep mode" android:textColor="@color/text_primary" />
-            </LinearLayout>
-
             <Button
                 android:id="@+id/aboutButton"
                 style="@style/ShrimpHubButton.Secondary"
@@ -130,7 +173,7 @@
                 android:id="@+id/saveSettingsButton"
                 style="@style/ShrimpHubButton"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="18dp"
                 android:text="Save Settings" />
 
@@ -138,11 +181,18 @@
                 android:id="@+id/logoutButton"
                 style="@style/ShrimpHubButton.Secondary"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="10dp"
                 android:text="Logout" />
         </LinearLayout>
     </ScrollView>
 
-    <include layout="@layout/bottom_nav" />
+    <LinearLayout
+        android:id="@+id/bottomNavContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <include layout="@layout/bottom_nav" />
+    </LinearLayout>
 </LinearLayout>

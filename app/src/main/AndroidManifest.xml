@@ -16,7 +16,6 @@
         android:theme="@style/Theme.PrawnHub_V2">
 
         <activity android:name=".ReportsActivity" />
-        <activity android:name=".DiagnosticsActivity" />
         <activity android:name=".ManageUsersActivity" />
         <activity android:name=".AdminDashboardActivity" />
         <activity android:name=".AboutActivity" />

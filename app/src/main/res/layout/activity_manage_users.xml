@@ -14,9 +14,11 @@
         <Button
             android:id="@+id/backButton"
             style="@style/ShrimpHubButton.Nav"
-            android:layout_width="112dp"
-            android:layout_height="48dp"
-            android:text="Back" />
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:contentDescription="Back"
+            android:text="&lt;"
+            android:textSize="20sp" />
 
         <TextView
             android:layout_width="match_parent"

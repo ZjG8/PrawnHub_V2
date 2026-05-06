@@ -4,8 +4,10 @@ import android.content.Intent;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,8 +36,6 @@ public class SettingsActivity extends BaseNavActivity {
     private EditText feedTimeInput;
     private EditText feedIntervalInput;
     private EditText overflowInput;
-    private EditText pondSizeInput;
-    private EditText shrimpTypeInput;
     private EditText minOxygenInput;
     private EditText minPhInput;
     private EditText maxPhInput;
@@ -46,16 +46,20 @@ public class SettingsActivity extends BaseNavActivity {
     private Button saveButton;
     private Button logoutButton;
     private Button aboutButton;
+    private Button backButton;
     private TextView settingsTitle;
+    private LinearLayout bottomNavContainer;
     private boolean isAdminMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        setupBottomNav();
 
         isAdminMode = "admin".equalsIgnoreCase(SessionStore.getRole(this));
+        if (!isAdminMode) {
+            setupBottomNav();
+        }
         settingsRef = FirebaseDatabase.getInstance().getReference().child("settings");
         thresholdsRef = FirebaseDatabase.getInstance().getReference().child("thresholds");
         bindViews();
@@ -72,8 +76,6 @@ public class SettingsActivity extends BaseNavActivity {
         feedTimeInput = findViewById(R.id.feedTimeInput);
         feedIntervalInput = findViewById(R.id.feedIntervalInput);
         overflowInput = findViewById(R.id.overflowInput);
-        pondSizeInput = findViewById(R.id.pondSizeInput);
-        shrimpTypeInput = findViewById(R.id.shrimpTypeInput);
         minOxygenInput = findViewById(R.id.minOxygenInput);
         minPhInput = findViewById(R.id.minPhInput);
         maxPhInput = findViewById(R.id.maxPhInput);
@@ -82,6 +84,8 @@ public class SettingsActivity extends BaseNavActivity {
         pushSwitch = findViewById(R.id.pushSwitch);
         midnightFeedSwitch = findViewById(R.id.midnightFeedSwitch);
         settingsTitle = findViewById(R.id.settingsTitle);
+        backButton = findViewById(R.id.backButton);
+        bottomNavContainer = findViewById(R.id.bottomNavContainer);
         TextView accountEmailText = findViewById(R.id.accountEmailText);
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             accountEmailText.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
@@ -91,6 +95,7 @@ public class SettingsActivity extends BaseNavActivity {
         aboutButton = findViewById(R.id.aboutButton);
 
         feedTimeInput.setOnClickListener(view -> showTimePicker());
+        backButton.setOnClickListener(view -> finish());
         saveButton.setOnClickListener(view -> saveSettings());
         logoutButton.setOnClickListener(view -> logout());
         aboutButton.setOnClickListener(view -> startActivity(new Intent(this, AboutActivity.class)));
@@ -98,6 +103,10 @@ public class SettingsActivity extends BaseNavActivity {
 
     private void applyRoleMode() {
         settingsTitle.setText(isAdminMode ? "System Settings" : "Monitoring Settings");
+        backButton.setVisibility(isAdminMode ? View.VISIBLE : View.GONE);
+        if (bottomNavContainer != null) {
+            bottomNavContainer.setVisibility(isAdminMode ? View.GONE : View.VISIBLE);
+        }
         saveButton.setVisibility(isAdminMode ? android.view.View.VISIBLE : android.view.View.GONE);
         logoutButton.setText(isAdminMode ? "Logout" : "Back to Roles");
         setEditable(maxTempInput, isAdminMode);
@@ -108,8 +117,6 @@ public class SettingsActivity extends BaseNavActivity {
         setEditable(feedTimeInput, isAdminMode);
         setEditable(feedIntervalInput, isAdminMode);
         setEditable(overflowInput, isAdminMode);
-        setEditable(pondSizeInput, isAdminMode);
-        setEditable(shrimpTypeInput, isAdminMode);
         setEditable(minOxygenInput, isAdminMode);
         setEditable(minPhInput, isAdminMode);
         setEditable(maxPhInput, isAdminMode);
@@ -138,8 +145,6 @@ public class SettingsActivity extends BaseNavActivity {
                 setText(feedTimeInput, snapshot, "feed_time", "08:00");
                 setText(feedIntervalInput, snapshot, "feed_interval_hours", "4");
                 setText(overflowInput, snapshot, "overflow_limit", getNestedValue(snapshot, "water_level", "max", "5.0"));
-                setText(pondSizeInput, snapshot, "pond_size", "");
-                setText(shrimpTypeInput, snapshot, "shrimp_type", "");
                 setText(minOxygenInput, snapshot, "min_oxygen", getNestedValue(snapshot, "oxygen", "min", "5.0"));
                 setText(minPhInput, snapshot, "min_ph", getNestedValue(snapshot, "ph", "min", "6.5"));
                 setText(maxPhInput, snapshot, "max_ph", getNestedValue(snapshot, "ph", "max", "8.5"));
@@ -216,8 +221,6 @@ public class SettingsActivity extends BaseNavActivity {
         updates.put("feed_time", feedTimeInput.getText().toString());
         updates.put("feed_interval_hours", Integer.parseInt(feedIntervalInput.getText().toString()));
         updates.put("overflow_limit", Float.parseFloat(overflowInput.getText().toString()));
-        updates.put("pond_size", pondSizeInput.getText().toString());
-        updates.put("shrimp_type", shrimpTypeInput.getText().toString());
         updates.put("min_oxygen", Float.parseFloat(minOxygenInput.getText().toString()));
         updates.put("min_ph", Float.parseFloat(minPhInput.getText().toString()));
         updates.put("max_ph", Float.parseFloat(maxPhInput.getText().toString()));
@@ -253,8 +256,6 @@ public class SettingsActivity extends BaseNavActivity {
                 && !TextUtils.isEmpty(feedTimeInput.getText())
                 && !TextUtils.isEmpty(feedIntervalInput.getText())
                 && !TextUtils.isEmpty(overflowInput.getText())
-                && !TextUtils.isEmpty(pondSizeInput.getText())
-                && !TextUtils.isEmpty(shrimpTypeInput.getText())
                 && !TextUtils.isEmpty(minOxygenInput.getText())
                 && !TextUtils.isEmpty(minPhInput.getText())
                 && !TextUtils.isEmpty(maxPhInput.getText());

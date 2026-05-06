@@ -18,8 +18,8 @@
             android:orientation="horizontal">
 
             <TextView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
                 android:background="@drawable/avatar_background"
                 android:gravity="center"
                 android:text="A"
@@ -30,76 +30,264 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:gravity="center"
-                android:text="Admin Dashboard"
+                android:text="Admin"
                 android:textColor="@color/text_primary"
-                android:textSize="26sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
                 android:contentDescription="PrawnHub logo"
                 android:src="@drawable/prawnhub_logo" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/adminSyncText"
+            android:layout_width="match_parent"
+            android:layout_height="74dp"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/admin_title_card"
+            android:gravity="center"
+            android:text="ADMIN DASHBOARD"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/onlineStatus"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/badge_green"
+                android:gravity="center"
+                android:text="ONLINE"
+                android:textColor="@color/brand_primary_dark"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/syncStatus"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/badge_green"
+                android:gravity="center"
+                android:text="SYNCHRONIZED"
+                android:textColor="@color/brand_primary_dark"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Quick Actions"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/reportsCard"
+            android:layout_width="match_parent"
+            android:layout_height="78dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Generate Farm Reports"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Export PDF and Excel reports"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/settingsCard"
+            android:layout_width="match_parent"
+            android:layout_height="78dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="System Settings"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Thresholds, feeding, and notifications"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/recentAlertsCard"
+            android:layout_width="match_parent"
+            android:layout_height="78dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Recent Alerts"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Review latest sensor warnings"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Live Sensor Summary"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="96dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_background"
+                android:orientation="vertical">
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Temperature" />
+                <TextView android:id="@+id/temperatureValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-- C" android:textColor="@color/brand_primary_dark" android:textSize="22sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="96dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_background"
+                android:orientation="vertical">
+
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Salinity" />
+                <TextView android:id="@+id/salinityValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-- ppt" android:textColor="@color/brand_primary_dark" android:textSize="22sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="@drawable/card_background"
-            android:text="Sync status loading..."
-            android:textColor="@color/text_primary"
-            android:textSize="15sp" />
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/manageUsersButton"
-            style="@style/ShrimpHubButton"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="16dp"
-            android:text="Manage User Accounts" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="96dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_background"
+                android:orientation="vertical">
 
-        <Button
-            android:id="@+id/diagnosticsButton"
-            style="@style/ShrimpHubButton"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:text="System Diagnostics" />
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Water Lv." />
+                <TextView android:id="@+id/waterLevelValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-- cm" android:textColor="@color/brand_primary_dark" android:textSize="22sp" android:textStyle="bold" />
+            </LinearLayout>
 
-        <Button
-            android:id="@+id/reportsButton"
-            style="@style/ShrimpHubButton"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:text="Farm Reports" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="96dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_background"
+                android:orientation="vertical">
 
-        <Button
-            android:id="@+id/thresholdsButton"
-            style="@style/ShrimpHubButton"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:text="Sensor Threshold Settings" />
+                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Turbidity" />
+                <TextView android:id="@+id/turbidityValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-- NTU" android:textColor="@color/brand_primary_dark" android:textSize="22sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/systemSettingsButton"
-            style="@style/ShrimpHubButton.Secondary"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:text="System Settings" />
-
-        <Button
-            android:id="@+id/logoutButton"
-            style="@style/ShrimpHubButton.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="Logout" />
+            android:background="@drawable/card_background"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Feeding Automation"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView android:id="@+id/feedTimeValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Feed Time: --" android:textColor="@color/text_secondary" android:textSize="15sp" />
+            <TextView android:id="@+id/feedIntervalValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Feeding Interval: --" android:textColor="@color/text_secondary" android:textSize="15sp" />
+            <TextView android:id="@+id/midnightFeedValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Midnight Auto Feed: --" android:textColor="@color/text_secondary" android:textSize="15sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/logoutCard"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:text="Logout"
+            android:textColor="@color/brand_primary_dark"
+            android:textSize="17sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>

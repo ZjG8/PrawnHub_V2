@@ -48,15 +48,15 @@ public class LoginActivity extends AppCompatActivity {
         roleText.setText("Admin Login");
         backButton.setOnClickListener(view -> finish());
         signUpButton.setVisibility(View.GONE);
-
-        if (auth.getCurrentUser() != null) {
-            verifyAdminAndOpen(auth.getCurrentUser().getUid(), auth.getCurrentUser().getEmail());
-            return;
-        }
-
         loginButton.setOnClickListener(view -> login());
         showPasswordButton.setOnClickListener(view -> togglePasswordVisibility());
         forgotPasswordButton.setOnClickListener(view -> sendPasswordReset());
+
+        if (auth.getCurrentUser() != null) {
+            loginButton.setEnabled(false);
+            verifyAdminAndOpen(auth.getCurrentUser().getUid(), auth.getCurrentUser().getEmail());
+            return;
+        }
     }
 
     private void login() {
