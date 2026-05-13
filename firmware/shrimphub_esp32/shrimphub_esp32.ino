@@ -67,6 +67,8 @@ unsigned long lastFeedCheck = 0;
 const long SENSOR_INTERVAL = 3000;
 const long FIREBASE_INTERVAL = 15000;
 const long FEED_CHECK_INTERVAL = 60000;
+const int HISTORY_MAX_ENTRIES = 100;
+unsigned long historySequence = 0;
 
 float max_temp = 32.0;
 float min_temp = 28.0;
@@ -167,6 +169,40 @@ String getTimestamp() {
   return String(buf);
 }
 
+String historyKey(unsigned long sequence) {
+  return "/history/log_" + String(sequence);
+}
+
+void syncHistorySequenceFromFirebase() {
+  if (!Firebase.ready()) return;
+  if (Firebase.RTDB.getInt(&fbdo, "/history_meta/next_id")) {
+    historySequence = (unsigned long)fbdo.intData();
+  }
+}
+
+void trimOldHistoryEntry() {
+  if (historySequence <= HISTORY_MAX_ENTRIES) {
+    return;
+  }
+  unsigned long oldSequence = historySequence - HISTORY_MAX_ENTRIES;
+  Firebase.RTDB.remove(&fbdo, historyKey(oldSequence));
+}
+
+void logHistoryRecord(const String &paramType, float value, const String &status, const String &timestamp) {
+  if (!Firebase.ready()) return;
+
+  historySequence++;
+  FirebaseJson json;
+  json.set("param_type", paramType);
+  json.set("timestamp", timestamp);
+  json.set("rec_val", value);
+  json.set("status", status);
+
+  Firebase.RTDB.setJSON(&fbdo, historyKey(historySequence), &json);
+  Firebase.RTDB.setInt(&fbdo, "/history_meta/next_id", historySequence);
+  trimOldHistoryEntry();
+}
+
 void stepMotor() {
   digitalWrite(IN1, stepSequence[stepIndex][0]);
   digitalWrite(IN2, stepSequence[stepIndex][1]);
@@ -188,11 +224,7 @@ void dispenseFeed(int stepsCount) {
   Serial.println("[FEED] Done.");
 
   if (Firebase.ready()) {
-    String key = "/history/" + String(millis()) + "_feed";
-    Firebase.RTDB.setString(&fbdo, key + "/param_type", "feed");
-    Firebase.RTDB.setString(&fbdo, key + "/timestamp", getTimestamp());
-    Firebase.RTDB.setFloat(&fbdo, key + "/rec_val", 1.0);
-    Firebase.RTDB.setString(&fbdo, key + "/status", "feed dispensed");
+    logHistoryRecord("feed", 1.0, "feed dispensed", getTimestamp());
   }
 }
 
@@ -282,31 +314,15 @@ void pushSensorData() {
   Firebase.RTDB.setFloat(&fbdo, "/aquarium/ph_val", phValue);
   Firebase.RTDB.setString(&fbdo, "/aquarium/last_sync", ts);
 
-  String baseKey = "/history/" + String(millis());
   bool tempAlert = (temperature > max_temp || temperature < min_temp);
   bool salAlert = (tdsValue < min_sal || tdsValue > max_sal);
   bool turbidityAlert = (turbidityValue > max_turb);
   bool waterAlert = (waterLevel > overflow_limit);
 
-  Firebase.RTDB.setString(&fbdo, baseKey + "_temp/param_type", "temp");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "_temp/rec_val", temperature);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_temp/timestamp", ts);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_temp/status", statusText(tempAlert));
-
-  Firebase.RTDB.setString(&fbdo, baseKey + "_salinity/param_type", "salinity");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "_salinity/rec_val", tdsValue);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_salinity/timestamp", ts);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_salinity/status", statusText(salAlert));
-
-  Firebase.RTDB.setString(&fbdo, baseKey + "_turbidity/param_type", "turbidity");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "_turbidity/rec_val", turbidityValue);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_turbidity/timestamp", ts);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_turbidity/status", statusText(turbidityAlert));
-
-  Firebase.RTDB.setString(&fbdo, baseKey + "_water/param_type", "water_level");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "_water/rec_val", waterLevel);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_water/timestamp", ts);
-  Firebase.RTDB.setString(&fbdo, baseKey + "_water/status", statusText(waterAlert));
+  logHistoryRecord("temp", temperature, statusText(tempAlert), ts);
+  logHistoryRecord("salinity", tdsValue, statusText(salAlert), ts);
+  logHistoryRecord("turbidity", turbidityValue, statusText(turbidityAlert), ts);
+  logHistoryRecord("water_level", waterLevel, statusText(waterAlert), ts);
 
   Serial.println("[Firebase] Data pushed at: " + ts);
 }
@@ -378,6 +394,7 @@ void setup() {
   if (WiFi.status() == WL_CONNECTED) {
     connectToFirebase();
     delay(3000);
+    syncHistorySequenceFromFirebase();
     readSettingsFromFirebase();
   }
 

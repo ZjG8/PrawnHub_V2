@@ -28,6 +28,14 @@
             android:textSize="28sp"
             android:textStyle="bold" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sensor Logs"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,12 +68,23 @@
                 android:text="End Date + Time" />
         </LinearLayout>
 
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/historyChart"
+        <Spinner
+            android:id="@+id/sensorFilterSpinner"
             android:layout_width="match_parent"
-            android:layout_height="220dp"
+            android:layout_height="52dp"
             android:layout_marginTop="12dp"
-            android:background="@drawable/card_background" />
+            android:background="@drawable/dropdown_background"
+            android:paddingLeft="16dp"
+            android:paddingRight="40dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="LIVE SENSOR LOG STREAM"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/historyRecycler"

@@ -2,20 +2,18 @@ package com.example.prawnhub_v2;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Description;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -24,8 +22,10 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -33,11 +33,12 @@ public class HistoryActivity extends BaseNavActivity {
     private final List<HistoryItem> allItems = new ArrayList<>();
     private final Calendar startDateTime = Calendar.getInstance();
     private final Calendar endDateTime = Calendar.getInstance();
-    private final SimpleDateFormat displayDateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.US);
+    private final SimpleDateFormat displayDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm a", Locale.US);
     private HistoryAdapter adapter;
-    private LineChart chart;
+    private RecyclerView recycler;
     private Button startDateTimeButton;
     private Button endDateTimeButton;
+    private String selectedParameter = "all";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +46,8 @@ public class HistoryActivity extends BaseNavActivity {
         setContentView(R.layout.activity_history);
         setupBottomNav();
 
-        chart = findViewById(R.id.historyChart);
         adapter = new HistoryAdapter();
-        RecyclerView recycler = findViewById(R.id.historyRecycler);
+        recycler = findViewById(R.id.historyRecycler);
         recycler.setLayoutManager(new LinearLayoutManager(this));
         recycler.setAdapter(adapter);
         Button backButton = findViewById(R.id.backButton);
@@ -59,36 +59,48 @@ public class HistoryActivity extends BaseNavActivity {
         startDateTimeButton.setOnClickListener(view -> showDateTimePicker(startDateTime, startDateTimeButton));
         endDateTimeButton.setOnClickListener(view -> showDateTimePicker(endDateTime, endDateTimeButton));
 
-        setupChart();
+        setupSensorFilter();
         listenToHistory();
     }
 
-    private void setupChart() {
-        chart.setNoDataText("Waiting for Firebase history data.");
-        Description description = new Description();
-        description.setText("Selected history range");
-        chart.setDescription(description);
+    private void setupSensorFilter() {
+        Spinner sensorFilterSpinner = findViewById(R.id.sensorFilterSpinner);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"All Sensors", "Temperature", "Salinity", "Turbidity", "Water Level"});
+        sensorFilterSpinner.setAdapter(adapter);
+        sensorFilterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedParameter = parameterKey((String) parent.getItemAtPosition(position));
+                renderData();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
     private void listenToHistory() {
         Query query = FirebaseDatabase.getInstance().getReference()
+                .child("ShrimpHub")
                 .child("history")
-                .orderByChild("timestamp")
-                .limitToLast(200);
+                .limitToLast(100);
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<HistoryItem> nextItems = new ArrayList<>();
                 for (DataSnapshot child : snapshot.getChildren()) {
-                    String timestamp = child.child("timestamp").getValue(String.class);
-                    String parameter = child.child("param_type").getValue(String.class);
-                    Float value = getNullableFloat(child.child("rec_val"));
-                    String status = child.child("status").getValue(String.class);
-                    if (timestamp != null && parameter != null && value != null && isImportant(status, parameter, value.floatValue())) {
-                        nextItems.add(new HistoryItem(timestamp, parameter, value, TextUtilsSafe.status(status)));
+                    try {
+                        nextItems.addAll(readShrimpHubHistoryItems(child));
+                    } catch (RuntimeException ignored) {
+                        // Skip malformed legacy rows instead of crashing the History screen.
                     }
                 }
-                Collections.reverse(nextItems);
+                Collections.sort(nextItems, (left, right) -> Long.compare(
+                        TextUtilsSafe.parseTime(right.timestamp),
+                        TextUtilsSafe.parseTime(left.timestamp)
+                ));
                 allItems.clear();
                 allItems.addAll(nextItems);
                 renderData();
@@ -101,37 +113,98 @@ public class HistoryActivity extends BaseNavActivity {
         });
     }
 
+    private List<HistoryItem> readShrimpHubHistoryItems(DataSnapshot child) {
+        List<HistoryItem> items = new ArrayList<>();
+        String timestamp = getTimestampString(child);
+        addSensorItem(items, timestamp, "temp", child.child("temperature"), "Normal");
+        addSensorItem(items, timestamp, "salinity", child.child("tds"), "Normal");
+        addSensorItem(items, timestamp, "turbidity", child.child("turbidity"), "Normal");
+        addSensorItem(items, timestamp, "water_level", child.child("waterLevel"), "Normal");
+        return items;
+    }
+
+    private void addSensorItem(List<HistoryItem> items, String timestamp, String parameter, DataSnapshot valueSnapshot, String status) {
+        Float value = getNullableFloat(valueSnapshot);
+        if (timestamp != null && value != null) {
+            items.add(new HistoryItem(timestamp, parameter, value, status));
+        }
+    }
+
+    private String getTimestampString(DataSnapshot child) {
+        String timestamp = getString(child.child("timestamp"));
+        if (timestamp != null) {
+            return timestamp;
+        }
+        String hour = getString(child.child("hour"));
+        String minute = getString(child.child("minute"));
+        if (hour != null && minute != null) {
+            return String.format(Locale.US, "%02d:%02d", parseInt(hour), parseInt(minute));
+        }
+        return null;
+    }
+
+    private HistoryItem readHistoryItem(DataSnapshot child) {
+        String timestamp = getString(child.child("timestamp"));
+        String parameter = normalizeParameter(getString(child.child("param_type")));
+        Float value = getNullableFloat(child.child("rec_val"));
+        String status = getString(child.child("status"));
+
+        if (timestamp == null) {
+            timestamp = getString(child.child("time"));
+        }
+        if (parameter == null) {
+            parameter = inferParameterFromKey(child.getKey());
+        }
+        if (value == null) {
+            value = getNullableFloat(child.child("value"));
+        }
+
+        if (timestamp == null || parameter == null || value == null) {
+            return null;
+        }
+        return new HistoryItem(timestamp, parameter, value, TextUtilsSafe.status(status));
+    }
+
     private void renderData() {
         List<HistoryItem> filtered = new ArrayList<>();
         for (HistoryItem item : allItems) {
-            if (isInSelectedRange(item.timestamp)) {
+            if (isInSelectedRange(item.timestamp) && isSelectedParameter(item.parameter)) {
                 filtered.add(item);
             }
         }
         adapter.submitList(filtered);
-
-        List<Entry> entries = new ArrayList<>();
-        for (int i = 0; i < filtered.size(); i++) {
-            entries.add(new Entry(i, filtered.get(filtered.size() - 1 - i).value));
+        if (!filtered.isEmpty()) {
+            recycler.scrollToPosition(0);
         }
-        LineDataSet dataSet = new LineDataSet(entries, "Important events");
-        dataSet.setColor(Color.rgb(0, 108, 103));
-        dataSet.setCircleColor(Color.rgb(247, 179, 43));
-        dataSet.setLineWidth(2f);
-        dataSet.setCircleRadius(4f);
-        chart.setData(new LineData(dataSet));
-        chart.invalidate();
     }
 
-    private boolean isImportant(String status, String parameter, float value) {
-        if (status != null && !status.trim().isEmpty() && !"normal".equalsIgnoreCase(status)) {
-            return true;
-        }
-        if ("salinity".equals(parameter)) return value < 15f || value > 25f;
-        if ("water_level".equals(parameter)) return value > 5f;
-        if ("turbidity".equals(parameter)) return value > 45f;
-        if ("temp".equals(parameter)) return value < 28f || value > 32f;
-        return false;
+    private boolean isSelectedParameter(String parameter) {
+        return "all".equals(selectedParameter) || selectedParameter.equals(parameter);
+    }
+
+    private String parameterKey(String label) {
+        if ("Temperature".equals(label)) return "temp";
+        if ("Salinity".equals(label)) return "salinity";
+        if ("Turbidity".equals(label)) return "turbidity";
+        if ("Water Level".equals(label)) return "water_level";
+        return "all";
+    }
+
+    private String normalizeParameter(String raw) {
+        if (raw == null) return null;
+        String parameter = raw.trim();
+        if ("temperature".equalsIgnoreCase(parameter)) return "temp";
+        if ("waterLevel".equals(parameter) || "water".equalsIgnoreCase(parameter)) return "water_level";
+        return parameter;
+    }
+
+    private String inferParameterFromKey(String key) {
+        if (key == null) return null;
+        if (key.contains("temp")) return "temp";
+        if (key.contains("sal")) return "salinity";
+        if (key.contains("turb")) return "turbidity";
+        if (key.contains("water")) return "water_level";
+        return null;
     }
 
     private boolean isInSelectedRange(String timestamp) {
@@ -161,7 +234,7 @@ public class HistoryActivity extends BaseNavActivity {
                             },
                             target.get(Calendar.HOUR_OF_DAY),
                             target.get(Calendar.MINUTE),
-                            true
+                            false
                     );
                     timeDialog.show();
                 },
@@ -192,16 +265,41 @@ public class HistoryActivity extends BaseNavActivity {
         return null;
     }
 
+    private String getString(DataSnapshot snapshot) {
+        Object value = snapshot.getValue();
+        if (value == null) {
+            return null;
+        }
+        return String.valueOf(value);
+    }
+
+    private int parseInt(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
     private static class TextUtilsSafe {
+        private static final SimpleDateFormat FIRMWARE_TIMESTAMP_FORMAT =
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+
         static String status(String status) {
             return status == null || status.trim().isEmpty() ? "Important alert" : status;
         }
 
         static long parseTime(String timestamp) {
             try {
-                return Long.parseLong(timestamp);
+                long raw = Long.parseLong(timestamp);
+                return raw < 100000000000L ? raw * 1000L : raw;
             } catch (NumberFormatException ignored) {
-                return 0L;
+                try {
+                    Date parsed = FIRMWARE_TIMESTAMP_FORMAT.parse(timestamp);
+                    return parsed == null ? 0L : parsed.getTime();
+                } catch (ParseException error) {
+                    return 0L;
+                }
             }
         }
     }

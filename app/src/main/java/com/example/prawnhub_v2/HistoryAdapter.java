@@ -10,9 +10,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder> {
     private List<HistoryItem> items = new ArrayList<>();
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm:ss a", Locale.US);
 
     public void submitList(List<HistoryItem> nextItems) {
         items = new ArrayList<>(nextItems);
@@ -29,10 +33,10 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
     @Override
     public void onBindViewHolder(@NonNull HistoryViewHolder holder, int position) {
         HistoryItem item = items.get(position);
-        holder.parameter.setText(formatParameter(item.parameter));
-        holder.timestamp.setText(item.timestamp);
-        holder.value.setText(String.format("%.2f", item.value));
-        holder.status.setText(item.status);
+        holder.parameter.setText(formatStatusIcon(item.status) + " " + formatTime(item.timestamp));
+        holder.timestamp.setText(formatMessage(item.parameter, item.value, item.status));
+        holder.value.setText("Parameter: " + formatParameter(item.parameter));
+        holder.status.setText("Status: " + item.status);
     }
 
     @Override
@@ -45,6 +49,53 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
             return "Unknown";
         }
         return raw.replace("_", " ");
+    }
+
+    private String formatTime(String timestamp) {
+        try {
+            long raw = Long.parseLong(timestamp);
+            long millis = raw < 100000000000L ? raw * 1000L : raw;
+            return timeFormat.format(new Date(millis));
+        } catch (NumberFormatException ignored) {
+            return timestamp;
+        }
+    }
+
+    private String formatStatusIcon(String status) {
+        if (status == null) {
+            return "!";
+        }
+        return "normal".equalsIgnoreCase(status) || "stable".equalsIgnoreCase(status) ? "LOG" : "ALERT";
+    }
+
+    private String formatMessage(String parameter, float value, String status) {
+        String unit = unitFor(parameter);
+        if ("temp".equals(parameter) || "temperature".equals(parameter)) {
+            return String.format(Locale.US, "Temperature recorded: %.1f%s", value, unit);
+        }
+        if ("salinity".equals(parameter)) {
+            return String.format(Locale.US, "Salinity detected: %.1f%s", value, unit);
+        }
+        if ("turbidity".equals(parameter)) {
+            String label = isWarning(status) ? "Turbidity spike detected" : "Turbidity recorded";
+            return String.format(Locale.US, "%s: %.1f%s", label, value, unit);
+        }
+        if ("water_level".equals(parameter) || "waterLevel".equals(parameter)) {
+            return String.format(Locale.US, "Water Level: %.1f%s", value, unit);
+        }
+        return String.format(Locale.US, "%s recorded: %.1f%s", formatParameter(parameter), value, unit);
+    }
+
+    private String unitFor(String parameter) {
+        if ("temp".equals(parameter) || "temperature".equals(parameter)) return " C";
+        if ("salinity".equals(parameter)) return " ppm";
+        if ("turbidity".equals(parameter)) return " NTU";
+        if ("water_level".equals(parameter) || "waterLevel".equals(parameter)) return " cm";
+        return "";
+    }
+
+    private boolean isWarning(String status) {
+        return status != null && !"normal".equalsIgnoreCase(status) && !"stable".equalsIgnoreCase(status);
     }
 
     static class HistoryViewHolder extends RecyclerView.ViewHolder {
