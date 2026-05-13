@@ -70,18 +70,12 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
     private void listenToSensorSummary() {
         FirebaseDatabase.getInstance().getReference().child("aquarium").addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                float temperature = getFloat(snapshot, "temp_val", 0f);
-                float salinity = getFloat(snapshot, "salinity_val", getFloat(snapshot, "tds_val", 0f));
-                float waterLevel = getFloat(snapshot, "water_lvl", 0f);
-                float turbidity = getFloat(snapshot, "turb_val", 0f);
-
-                temperatureValue.setText(String.format(Locale.US, "%.1f C", temperature));
-                salinityValue.setText(String.format(Locale.US, "%.0f ppt", salinity));
-                waterLevelValue.setText(String.format(Locale.US, "%.1f cm", waterLevel));
-                turbidityValue.setText(String.format(Locale.US, "%.0f NTU", turbidity));
-                onlineStatus.setText("ONLINE");
-                syncStatus.setText("SYNCHRONIZED");
+            public void onDataChange(@NonNull DataSnapshot aquarium) {
+                float temperature = getFloat(aquarium, "temp_val", 0f);
+                float salinity = getFloat(aquarium, "salinity_val", getFloat(aquarium, "tds_val", 0f));
+                float waterLevel = getFloat(aquarium, "water_lvl", 0f);
+                float turbidity = getFloat(aquarium, "turb_val", 0f);
+                renderSensorSummary(temperature, salinity, waterLevel, turbidity);
             }
 
             @Override
@@ -91,6 +85,35 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
                 Toast.makeText(AdminDashboardActivity.this, "Sensor summary unavailable.", Toast.LENGTH_SHORT).show();
             }
         });
+
+        FirebaseDatabase.getInstance().getReference().child("ShrimpHub").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot shrimpHub) {
+                if (!shrimpHub.exists()) {
+                    return;
+                }
+                float temperature = getFloat(shrimpHub, "temperature", 0f);
+                float salinity = getFloat(shrimpHub, "tds", 0f);
+                float waterLevel = getFloat(shrimpHub, "waterLevel", 0f);
+                float turbidity = getFloat(shrimpHub, "turbidity", 0f);
+                renderSensorSummary(temperature, salinity, waterLevel, turbidity);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                onlineStatus.setText("OFFLINE");
+                syncStatus.setText("SYNC ERROR");
+            }
+        });
+    }
+
+    private void renderSensorSummary(float temperature, float salinity, float waterLevel, float turbidity) {
+        temperatureValue.setText(String.format(Locale.US, "%.1f C", temperature));
+        salinityValue.setText(String.format(Locale.US, "%.0f ppt", salinity));
+        waterLevelValue.setText(String.format(Locale.US, "%.1f cm", waterLevel));
+        turbidityValue.setText(String.format(Locale.US, "%.0f NTU", turbidity));
+        onlineStatus.setText("ONLINE");
+        syncStatus.setText("SYNCHRONIZED");
     }
 
     private void listenToFeedingSettings() {
@@ -116,8 +139,18 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
     }
 
     private float getFloat(DataSnapshot snapshot, String key, float fallback) {
-        Number value = snapshot.child(key).getValue(Number.class);
-        return value == null ? fallback : value.floatValue();
+        Object value = snapshot.child(key).getValue();
+        if (value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Float.parseFloat((String) value);
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
     }
 
     private String getString(DataSnapshot snapshot, String key, String fallback) {

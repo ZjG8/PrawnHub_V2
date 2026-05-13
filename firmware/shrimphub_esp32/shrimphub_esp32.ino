@@ -14,16 +14,19 @@
 #include <RTClib.h>
 
 // ============================================================
-// REPLACE THESE VALUES WITH YOUR OWN
+// FIREBASE / WIFI CONFIG
+// Fill in WiFi and Firebase Auth account before uploading.
+// Database URL and API key are from app/google-services.json.
 // ============================================================
 #define WIFI_SSID       "REPLACE_THIS_YOUR_HOTSPOT_NAME"
 #define WIFI_PASSWORD   "REPLACE_THIS_YOUR_HOTSPOT_PASSWORD"
-#define API_KEY         "REPLACE_THIS_YOUR_FIREBASE_API_KEY"
-#define DATABASE_URL    "REPLACE_THIS_YOUR_FIREBASE_DATABASE_URL"
-#define USER_EMAIL      "farm@shrimphub.com"
-#define USER_PASSWORD   "REPLACE_THIS_YOUR_FIREBASE_PASSWORD"
+#define API_KEY         "AIzaSyDrdRxa7PuJX5XOtC2_WjAQoNHYy1cFjkA"
+#define DATABASE_URL    "https://prawnhub-a5eca-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define USER_EMAIL      "REPLACE_THIS_FIREBASE_AUTH_EMAIL"
+#define USER_PASSWORD   "REPLACE_THIS_FIREBASE_AUTH_PASSWORD"
 // ============================================================
 
+// Keep these hardware pins aligned with plans/PrawnHub-Connect.md.
 #define ONE_WIRE_BUS    4
 #define TDS_PIN         34
 #define TURBIDITY_PIN   35
@@ -35,10 +38,9 @@
 #define IN3             27
 #define IN4             14
 
-#define RELAY_PUMP      32
-#define RELAY_FILTER    33
-#define RELAY_AERATOR   5
-#define RELAY_LIGHT     18
+#define RELAY_PUMP      16
+#define RELAY_FILTER    17
+#define RELAY_AERATOR   18
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature tempSensor(&oneWire);
@@ -48,10 +50,13 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
+bool rtcAvailable = false;
 float temperature = 0.0;
 float tdsValue = 0.0;
 float turbidityValue = 0.0;
 float waterLevel = 0.0;
+float oxygenValue = 0.0;
+float phValue = 0.0;
 
 float TDS_FACTOR = 0.5;
 float TURBIDITY_FACTOR = 1.0;
@@ -69,6 +74,9 @@ int min_sal = 15;
 int max_sal = 25;
 float max_turb = 45.0;
 float overflow_limit = 5.0;
+float min_oxygen = 5.0;
+float min_ph = 6.5;
+float max_ph = 8.5;
 String feed_time = "08:00";
 
 int stepIndex = 0;
@@ -148,6 +156,9 @@ float readWaterLevel() {
 }
 
 String getTimestamp() {
+  if (!rtcAvailable) {
+    return "boot-" + String(millis());
+  }
   DateTime now = rtc.now();
   char buf[20];
   sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d",
@@ -177,10 +188,11 @@ void dispenseFeed(int stepsCount) {
   Serial.println("[FEED] Done.");
 
   if (Firebase.ready()) {
-    String key = "/history/" + String(millis());
+    String key = "/history/" + String(millis()) + "_feed";
     Firebase.RTDB.setString(&fbdo, key + "/param_type", "feed");
     Firebase.RTDB.setString(&fbdo, key + "/timestamp", getTimestamp());
     Firebase.RTDB.setFloat(&fbdo, key + "/rec_val", 1.0);
+    Firebase.RTDB.setString(&fbdo, key + "/status", "feed dispensed");
   }
 }
 
@@ -222,15 +234,32 @@ void checkOverflow() {
   }
 }
 
-void checkTempAlert() {
-  bool alert = (temperature > max_temp || temperature < min_temp);
-  setFirebaseBool("/alerts/temp_alert", alert);
+String statusText(bool alert) {
+  return alert ? "alert" : "normal";
+}
+
+void updateAlertFlags() {
+  bool tempAlert = (temperature > max_temp || temperature < min_temp);
+  bool salAlert = (tdsValue < min_sal || tdsValue > max_sal);
+  bool turbidityAlert = (turbidityValue > max_turb);
+  bool oxygenAlert = (oxygenValue > 0.0 && oxygenValue < min_oxygen);
+  bool phAlert = (phValue > 0.0 && (phValue < min_ph || phValue > max_ph));
+
+  setFirebaseBool("/alerts/temp_alert", tempAlert);
+  setFirebaseBool("/alerts/sal_alert", salAlert);
+  setFirebaseBool("/alerts/turbidity_alert", turbidityAlert);
+  setFirebaseBool("/alerts/oxygen_alert", oxygenAlert);
+  setFirebaseBool("/alerts/ph_alert", phAlert);
 }
 
 void checkFeedSchedule() {
+  if (!rtcAvailable) {
+    return;
+  }
   DateTime now = rtc.now();
-  String currentTime = String(now.hour()) + ":" +
-                       (now.minute() < 10 ? "0" : "") + String(now.minute());
+  char currentTimeBuffer[6];
+  sprintf(currentTimeBuffer, "%02d:%02d", now.hour(), now.minute());
+  String currentTime = String(currentTimeBuffer);
   if (currentTime == feed_time) {
     Serial.println("[FEED] Scheduled feed time reached: " + currentTime);
     dispenseFeed(512);
@@ -248,24 +277,36 @@ void pushSensorData() {
   Firebase.RTDB.setFloat(&fbdo, "/aquarium/tds_val", tdsValue);
   Firebase.RTDB.setFloat(&fbdo, "/aquarium/turb_val", turbidityValue);
   Firebase.RTDB.setFloat(&fbdo, "/aquarium/water_lvl", waterLevel);
+  Firebase.RTDB.setFloat(&fbdo, "/aquarium/oxygen_val", oxygenValue);
+  Firebase.RTDB.setFloat(&fbdo, "/aquarium/do_val", oxygenValue);
+  Firebase.RTDB.setFloat(&fbdo, "/aquarium/ph_val", phValue);
   Firebase.RTDB.setString(&fbdo, "/aquarium/last_sync", ts);
 
   String baseKey = "/history/" + String(millis());
-  Firebase.RTDB.setString(&fbdo, baseKey + "t/param_type", "temp");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "t/rec_val", temperature);
-  Firebase.RTDB.setString(&fbdo, baseKey + "t/timestamp", ts);
+  bool tempAlert = (temperature > max_temp || temperature < min_temp);
+  bool salAlert = (tdsValue < min_sal || tdsValue > max_sal);
+  bool turbidityAlert = (turbidityValue > max_turb);
+  bool waterAlert = (waterLevel > overflow_limit);
 
-  Firebase.RTDB.setString(&fbdo, baseKey + "s/param_type", "salinity");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "s/rec_val", tdsValue);
-  Firebase.RTDB.setString(&fbdo, baseKey + "s/timestamp", ts);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_temp/param_type", "temp");
+  Firebase.RTDB.setFloat(&fbdo, baseKey + "_temp/rec_val", temperature);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_temp/timestamp", ts);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_temp/status", statusText(tempAlert));
 
-  Firebase.RTDB.setString(&fbdo, baseKey + "u/param_type", "turbidity");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "u/rec_val", turbidityValue);
-  Firebase.RTDB.setString(&fbdo, baseKey + "u/timestamp", ts);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_salinity/param_type", "salinity");
+  Firebase.RTDB.setFloat(&fbdo, baseKey + "_salinity/rec_val", tdsValue);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_salinity/timestamp", ts);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_salinity/status", statusText(salAlert));
 
-  Firebase.RTDB.setString(&fbdo, baseKey + "w/param_type", "water_level");
-  Firebase.RTDB.setFloat(&fbdo, baseKey + "w/rec_val", waterLevel);
-  Firebase.RTDB.setString(&fbdo, baseKey + "w/timestamp", ts);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_turbidity/param_type", "turbidity");
+  Firebase.RTDB.setFloat(&fbdo, baseKey + "_turbidity/rec_val", turbidityValue);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_turbidity/timestamp", ts);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_turbidity/status", statusText(turbidityAlert));
+
+  Firebase.RTDB.setString(&fbdo, baseKey + "_water/param_type", "water_level");
+  Firebase.RTDB.setFloat(&fbdo, baseKey + "_water/rec_val", waterLevel);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_water/timestamp", ts);
+  Firebase.RTDB.setString(&fbdo, baseKey + "_water/status", statusText(waterAlert));
 
   Serial.println("[Firebase] Data pushed at: " + ts);
 }
@@ -278,6 +319,9 @@ void readSettingsFromFirebase() {
   if (Firebase.RTDB.getInt(&fbdo, "/settings/max_sal")) max_sal = fbdo.intData();
   if (Firebase.RTDB.getFloat(&fbdo, "/settings/max_turb")) max_turb = fbdo.floatData();
   if (Firebase.RTDB.getFloat(&fbdo, "/settings/overflow_limit")) overflow_limit = fbdo.floatData();
+  if (Firebase.RTDB.getFloat(&fbdo, "/settings/min_oxygen")) min_oxygen = fbdo.floatData();
+  if (Firebase.RTDB.getFloat(&fbdo, "/settings/min_ph")) min_ph = fbdo.floatData();
+  if (Firebase.RTDB.getFloat(&fbdo, "/settings/max_ph")) max_ph = fbdo.floatData();
   if (Firebase.RTDB.getString(&fbdo, "/settings/feed_time")) feed_time = fbdo.stringData();
 }
 
@@ -307,11 +351,11 @@ void setup() {
 
   tempSensor.begin();
   Wire.begin(21, 22);
-  if (!rtc.begin()) {
+  rtcAvailable = rtc.begin();
+  if (!rtcAvailable) {
     Serial.println("[ERROR] RTC module not found! Check SDA->GPIO21 and SCL->GPIO22.");
-    while (1);
-  }
-  if (rtc.lostPower()) {
+    Serial.println("[RTC] Continuing without scheduled feeding until RTC is connected.");
+  } else if (rtc.lostPower()) {
     Serial.println("[RTC] Power was lost, setting time to compile time.");
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
@@ -319,11 +363,9 @@ void setup() {
   pinMode(RELAY_PUMP, OUTPUT);
   pinMode(RELAY_FILTER, OUTPUT);
   pinMode(RELAY_AERATOR, OUTPUT);
-  pinMode(RELAY_LIGHT, OUTPUT);
   digitalWrite(RELAY_PUMP, HIGH);
   digitalWrite(RELAY_FILTER, HIGH);
   digitalWrite(RELAY_AERATOR, HIGH);
-  digitalWrite(RELAY_LIGHT, HIGH);
 
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
@@ -353,8 +395,12 @@ void loop() {
     waterLevel = readWaterLevel();
 
     Serial.println("\n===== SHRIMPHUB SENSOR DATA =====");
-    DateTime t = rtc.now();
-    Serial.printf("Time       : %02d:%02d:%02d\n", t.hour(), t.minute(), t.second());
+    if (rtcAvailable) {
+      DateTime t = rtc.now();
+      Serial.printf("Time       : %02d:%02d:%02d\n", t.hour(), t.minute(), t.second());
+    } else {
+      Serial.println("Time       : RTC unavailable");
+    }
     Serial.printf("Temperature: %.2f C\n", temperature);
     Serial.printf("TDS/Sal    : %.2f ppm\n", tdsValue);
     Serial.printf("Turbidity  : %.2f NTU\n", turbidityValue);
@@ -376,7 +422,7 @@ void loop() {
       readControlFromFirebase();
       checkAmmoniaRisk();
       checkOverflow();
-      checkTempAlert();
+      updateAlertFlags();
     } else {
       Serial.println("[OFFLINE] Running local automation only.");
       checkAmmoniaRisk();

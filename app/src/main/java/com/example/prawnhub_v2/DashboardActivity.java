@@ -31,28 +31,20 @@ public class DashboardActivity extends BaseNavActivity {
     private TextView salText;
     private TextView turbText;
     private TextView waterText;
-    private TextView oxygenText;
-    private TextView phText;
     private TextView growthPredictionText;
     private TextView recentAlertsText;
     private LinearLayout tempCard;
     private LinearLayout salCard;
     private LinearLayout turbCard;
     private LinearLayout waterCard;
-    private LinearLayout oxygenCard;
-    private LinearLayout phCard;
     private Switch pumpSwitch;
     private Switch filterSwitch;
-    private Switch aeratorSwitch;
     private float minTemp = 28f;
     private float maxTemp = 32f;
     private int minSal = 15;
     private int maxSal = 25;
     private float maxTurb = 45f;
     private float overflowLimit = 5f;
-    private float minOxygen = 5f;
-    private float minPh = 6.5f;
-    private float maxPh = 8.5f;
     private boolean updatingSwitches = false;
     private boolean ammoniaWasActive = false;
     private boolean overflowWasActive = false;
@@ -82,19 +74,14 @@ public class DashboardActivity extends BaseNavActivity {
         salText = findViewById(R.id.salText);
         turbText = findViewById(R.id.turbText);
         waterText = findViewById(R.id.waterText);
-        oxygenText = findViewById(R.id.oxygenText);
-        phText = findViewById(R.id.phText);
         growthPredictionText = findViewById(R.id.growthPredictionText);
         recentAlertsText = findViewById(R.id.recentAlertsText);
         tempCard = findViewById(R.id.tempCard);
         salCard = findViewById(R.id.salCard);
         turbCard = findViewById(R.id.turbCard);
         waterCard = findViewById(R.id.waterCard);
-        oxygenCard = findViewById(R.id.oxygenCard);
-        phCard = findViewById(R.id.phCard);
         pumpSwitch = findViewById(R.id.pumpSwitch);
         filterSwitch = findViewById(R.id.filterSwitch);
-        aeratorSwitch = findViewById(R.id.aeratorSwitch);
         Button feedButton = findViewById(R.id.feedButton);
         feedButton.setOnClickListener(view -> database.child("control").child("motor_trig").setValue(true)
                 .addOnSuccessListener(unused -> Toast.makeText(this, "Feed command sent.", Toast.LENGTH_SHORT).show()));
@@ -109,13 +96,10 @@ public class DashboardActivity extends BaseNavActivity {
                 database.child("control").child("pump_stat").setValue(checked);
             } else if (button.getId() == R.id.filterSwitch) {
                 database.child("control").child("filter_stat").setValue(checked);
-            } else if (button.getId() == R.id.aeratorSwitch) {
-                database.child("control").child("aerator_stat").setValue(checked);
             }
         };
         pumpSwitch.setOnCheckedChangeListener(listener);
         filterSwitch.setOnCheckedChangeListener(listener);
-        aeratorSwitch.setOnCheckedChangeListener(listener);
     }
 
     private void listenToSettings() {
@@ -128,9 +112,6 @@ public class DashboardActivity extends BaseNavActivity {
                 maxSal = getInt(snapshot, "max_sal", 25);
                 maxTurb = getFloat(snapshot, "max_turb", 45f);
                 overflowLimit = getFloat(snapshot, "overflow_limit", 5f);
-                minOxygen = getFloat(snapshot, "min_oxygen", 5f);
-                minPh = getFloat(snapshot, "min_ph", 6.5f);
-                maxPh = getFloat(snapshot, "max_ph", 8.5f);
             }
 
             @Override
@@ -143,33 +124,12 @@ public class DashboardActivity extends BaseNavActivity {
     private void listenToAquarium() {
         database.child("aquarium").addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                float temp = getFloat(snapshot, "temp_val", 0f);
-                float salinity = getFloat(snapshot, "tds_val", 0f);
-                float turbidity = getFloat(snapshot, "turb_val", 0f);
-                float water = getFloat(snapshot, "water_lvl", 0f);
-                float oxygen = getFloat(snapshot, "oxygen_val", getFloat(snapshot, "do_val", 0f));
-                float ph = getFloat(snapshot, "ph_val", 0f);
-                tempText.setText(String.format("%.1f C", temp));
-                salText.setText(String.format("%.1f ppm", salinity));
-                turbText.setText(String.format("%.1f NTU", turbidity));
-                waterText.setText(String.format("%.1f cm", water));
-                oxygenText.setText(String.format("%.1f mg/L", oxygen));
-                phText.setText(String.format("%.1f", ph));
-
-                boolean tempAlert = temp < minTemp || temp > maxTemp;
-                boolean salAlert = salinity < minSal || salinity > maxSal;
-                boolean turbAlert = turbidity > maxTurb;
-                boolean waterAlert = water > overflowLimit;
-                boolean oxygenAlert = oxygen > 0f && oxygen < minOxygen;
-                boolean phAlert = ph > 0f && (ph < minPh || ph > maxPh);
-                setCardAlert(tempCard, tempAlert);
-                setCardAlert(salCard, salAlert);
-                setCardAlert(turbCard, turbAlert);
-                setCardAlert(waterCard, waterAlert);
-                setCardAlert(oxygenCard, oxygenAlert);
-                setCardAlert(phCard, phAlert);
-                renderPondHealth(tempAlert, salAlert, turbAlert, waterAlert, oxygenAlert, phAlert);
+            public void onDataChange(@NonNull DataSnapshot aquarium) {
+                float temp = getFloat(aquarium, "temp_val", 0f);
+                float salinity = getFloat(aquarium, "tds_val", 0f);
+                float turbidity = getFloat(aquarium, "turb_val", 0f);
+                float water = getFloat(aquarium, "water_lvl", 0f);
+                renderSensorValues(temp, salinity, turbidity, water);
             }
 
             @Override
@@ -177,6 +137,42 @@ public class DashboardActivity extends BaseNavActivity {
                 Toast.makeText(DashboardActivity.this, "Aquarium listener failed.", Toast.LENGTH_SHORT).show();
             }
         });
+
+        database.child("ShrimpHub").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot shrimpHub) {
+                if (!shrimpHub.exists()) {
+                    return;
+                }
+                float temp = getFloat(shrimpHub, "temperature", 0f);
+                float salinity = getFloat(shrimpHub, "tds", 0f);
+                float turbidity = getFloat(shrimpHub, "turbidity", 0f);
+                float water = getFloat(shrimpHub, "waterLevel", 0f);
+                renderSensorValues(temp, salinity, turbidity, water);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(DashboardActivity.this, "ShrimpHub listener failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void renderSensorValues(float temp, float salinity, float turbidity, float water) {
+        tempText.setText(String.format("%.1f C", temp));
+        salText.setText(String.format("%.1f ppm", salinity));
+        turbText.setText(String.format("%.1f NTU", turbidity));
+        waterText.setText(String.format("%.1f cm", water));
+
+        boolean tempAlert = temp < minTemp || temp > maxTemp;
+        boolean salAlert = salinity < minSal || salinity > maxSal;
+        boolean turbAlert = turbidity > maxTurb;
+        boolean waterAlert = water > overflowLimit;
+        setCardAlert(tempCard, tempAlert);
+        setCardAlert(salCard, salAlert);
+        setCardAlert(turbCard, turbAlert);
+        setCardAlert(waterCard, waterAlert);
+        renderPondHealth(tempAlert, salAlert, turbAlert, waterAlert);
     }
 
     private void listenToControl() {
@@ -186,7 +182,6 @@ public class DashboardActivity extends BaseNavActivity {
                 updatingSwitches = true;
                 pumpSwitch.setChecked(Boolean.TRUE.equals(snapshot.child("pump_stat").getValue(Boolean.class)));
                 filterSwitch.setChecked(Boolean.TRUE.equals(snapshot.child("filter_stat").getValue(Boolean.class)));
-                aeratorSwitch.setChecked(Boolean.TRUE.equals(snapshot.child("aerator_stat").getValue(Boolean.class)));
                 updatingSwitches = false;
             }
 
@@ -234,14 +229,12 @@ public class DashboardActivity extends BaseNavActivity {
         });
     }
 
-    private void renderPondHealth(boolean temp, boolean sal, boolean turbidity, boolean water, boolean oxygen, boolean ph) {
+    private void renderPondHealth(boolean temp, boolean sal, boolean turbidity, boolean water) {
         int alertCount = 0;
         if (temp) alertCount++;
         if (sal) alertCount++;
         if (turbidity) alertCount++;
         if (water) alertCount++;
-        if (oxygen) alertCount++;
-        if (ph) alertCount++;
 
         int score = Math.max(0, 100 - (alertCount * 18));
         growthPredictionText.setText(String.format("Estimated prawn health: %d%%\n%s",
@@ -282,13 +275,33 @@ public class DashboardActivity extends BaseNavActivity {
     }
 
     private float getFloat(DataSnapshot snapshot, String key, float fallback) {
-        Number value = snapshot.child(key).getValue(Number.class);
-        return value == null ? fallback : value.floatValue();
+        Object value = snapshot.child(key).getValue();
+        if (value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Float.parseFloat((String) value);
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
     }
 
     private int getInt(DataSnapshot snapshot, String key, int fallback) {
-        Number value = snapshot.child(key).getValue(Number.class);
-        return value == null ? fallback : value.intValue();
+        Object value = snapshot.child(key).getValue();
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
     }
 
     private void requestNotificationPermission() {

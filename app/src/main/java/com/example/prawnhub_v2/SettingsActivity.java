@@ -36,9 +36,6 @@ public class SettingsActivity extends BaseNavActivity {
     private EditText feedTimeInput;
     private EditText feedIntervalInput;
     private EditText overflowInput;
-    private EditText minOxygenInput;
-    private EditText minPhInput;
-    private EditText maxPhInput;
     private Switch soundSwitch;
     private Switch vibrateSwitch;
     private Switch pushSwitch;
@@ -76,9 +73,6 @@ public class SettingsActivity extends BaseNavActivity {
         feedTimeInput = findViewById(R.id.feedTimeInput);
         feedIntervalInput = findViewById(R.id.feedIntervalInput);
         overflowInput = findViewById(R.id.overflowInput);
-        minOxygenInput = findViewById(R.id.minOxygenInput);
-        minPhInput = findViewById(R.id.minPhInput);
-        maxPhInput = findViewById(R.id.maxPhInput);
         soundSwitch = findViewById(R.id.soundSwitch);
         vibrateSwitch = findViewById(R.id.vibrateSwitch);
         pushSwitch = findViewById(R.id.pushSwitch);
@@ -87,8 +81,10 @@ public class SettingsActivity extends BaseNavActivity {
         backButton = findViewById(R.id.backButton);
         bottomNavContainer = findViewById(R.id.bottomNavContainer);
         TextView accountEmailText = findViewById(R.id.accountEmailText);
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+        if (isAdminMode && FirebaseAuth.getInstance().getCurrentUser() != null) {
             accountEmailText.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
+        } else {
+            accountEmailText.setText("Farmer");
         }
         saveButton = findViewById(R.id.saveSettingsButton);
         logoutButton = findViewById(R.id.logoutButton);
@@ -117,9 +113,6 @@ public class SettingsActivity extends BaseNavActivity {
         setEditable(feedTimeInput, isAdminMode);
         setEditable(feedIntervalInput, isAdminMode);
         setEditable(overflowInput, isAdminMode);
-        setEditable(minOxygenInput, isAdminMode);
-        setEditable(minPhInput, isAdminMode);
-        setEditable(maxPhInput, isAdminMode);
         soundSwitch.setEnabled(isAdminMode);
         vibrateSwitch.setEnabled(isAdminMode);
         pushSwitch.setEnabled(isAdminMode);
@@ -145,9 +138,6 @@ public class SettingsActivity extends BaseNavActivity {
                 setText(feedTimeInput, snapshot, "feed_time", "08:00");
                 setText(feedIntervalInput, snapshot, "feed_interval_hours", "4");
                 setText(overflowInput, snapshot, "overflow_limit", getNestedValue(snapshot, "water_level", "max", "5.0"));
-                setText(minOxygenInput, snapshot, "min_oxygen", getNestedValue(snapshot, "oxygen", "min", "5.0"));
-                setText(minPhInput, snapshot, "min_ph", getNestedValue(snapshot, "ph", "min", "6.5"));
-                setText(maxPhInput, snapshot, "max_ph", getNestedValue(snapshot, "ph", "max", "8.5"));
                 soundSwitch.setChecked(getBoolean(snapshot, "sound_alert", true));
                 vibrateSwitch.setChecked(getBoolean(snapshot, "vibrate", true));
                 pushSwitch.setChecked(getBoolean(snapshot, "push_notifications", true));
@@ -161,9 +151,6 @@ public class SettingsActivity extends BaseNavActivity {
                         setText(minSalInput, thresholdSnapshot, "salinity/min", String.valueOf(minSalInput.getText()));
                         setText(maxSalInput, thresholdSnapshot, "salinity/max", String.valueOf(maxSalInput.getText()));
                         setText(maxTurbInput, thresholdSnapshot, "turbidity/max", String.valueOf(maxTurbInput.getText()));
-                        setText(minOxygenInput, thresholdSnapshot, "oxygen/min", String.valueOf(minOxygenInput.getText()));
-                        setText(minPhInput, thresholdSnapshot, "ph/min", String.valueOf(minPhInput.getText()));
-                        setText(maxPhInput, thresholdSnapshot, "ph/max", String.valueOf(maxPhInput.getText()));
                         setText(overflowInput, thresholdSnapshot, "water_level/max", String.valueOf(overflowInput.getText()));
                     }
 
@@ -221,9 +208,6 @@ public class SettingsActivity extends BaseNavActivity {
         updates.put("feed_time", feedTimeInput.getText().toString());
         updates.put("feed_interval_hours", Integer.parseInt(feedIntervalInput.getText().toString()));
         updates.put("overflow_limit", Float.parseFloat(overflowInput.getText().toString()));
-        updates.put("min_oxygen", Float.parseFloat(minOxygenInput.getText().toString()));
-        updates.put("min_ph", Float.parseFloat(minPhInput.getText().toString()));
-        updates.put("max_ph", Float.parseFloat(maxPhInput.getText().toString()));
         updates.put("sound_alert", soundSwitch.isChecked());
         updates.put("vibrate", vibrateSwitch.isChecked());
         updates.put("push_notifications", pushSwitch.isChecked());
@@ -236,9 +220,6 @@ public class SettingsActivity extends BaseNavActivity {
         thresholdUpdates.put("salinity/min", Integer.parseInt(minSalInput.getText().toString()));
         thresholdUpdates.put("salinity/max", Integer.parseInt(maxSalInput.getText().toString()));
         thresholdUpdates.put("turbidity/max", Float.parseFloat(maxTurbInput.getText().toString()));
-        thresholdUpdates.put("oxygen/min", Float.parseFloat(minOxygenInput.getText().toString()));
-        thresholdUpdates.put("ph/min", Float.parseFloat(minPhInput.getText().toString()));
-        thresholdUpdates.put("ph/max", Float.parseFloat(maxPhInput.getText().toString()));
         thresholdUpdates.put("water_level/max", Float.parseFloat(overflowInput.getText().toString()));
 
         settingsRef.updateChildren(updates);
@@ -255,10 +236,7 @@ public class SettingsActivity extends BaseNavActivity {
                 && !TextUtils.isEmpty(maxTurbInput.getText())
                 && !TextUtils.isEmpty(feedTimeInput.getText())
                 && !TextUtils.isEmpty(feedIntervalInput.getText())
-                && !TextUtils.isEmpty(overflowInput.getText())
-                && !TextUtils.isEmpty(minOxygenInput.getText())
-                && !TextUtils.isEmpty(minPhInput.getText())
-                && !TextUtils.isEmpty(maxPhInput.getText());
+                && !TextUtils.isEmpty(overflowInput.getText());
     }
 
     private void logout() {

@@ -59,7 +59,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Account"
+                    android:text="Role"
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -69,7 +69,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="user@email.com"
+                    android:text="Farmer"
                     android:textColor="@color/text_secondary"
                     android:textSize="15sp" />
             </LinearLayout>
@@ -103,15 +103,6 @@
 
                 <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Max Turbidity" />
                 <EditText android:id="@+id/maxTurbInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max Turbidity" android:inputType="numberDecimal" />
-
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min Oxygen" />
-                <EditText android:id="@+id/minOxygenInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min Oxygen" android:inputType="numberDecimal" />
-
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Max pH" />
-                <EditText android:id="@+id/maxPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max pH" android:inputType="numberDecimal" />
-
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min pH" />
-                <EditText android:id="@+id/minPhInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min pH" android:inputType="numberDecimal" />
 
                 <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Overflow Limit" />
                 <EditText android:id="@+id/overflowInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Overflow Limit" android:inputType="numberDecimal" />

@@ -112,7 +112,6 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/recommendationsText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
@@ -122,11 +121,12 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/recommendationsText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/card_success"
-                android:text="Maintain stable oxygen levels and keep temperature within the target range."
+                android:text="Maintain stable salinity, clear water, and target temperature."
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 

@@ -78,8 +78,7 @@ public class GrowthActivity extends BaseNavActivity {
         database.child("settings").child("target_harvest_days").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Number value = snapshot.getValue(Number.class);
-                targetDays = value == null ? 75 : value.intValue();
+                targetDays = getInt(snapshot, 75);
                 targetText.setText("Harvest readiness is calculated automatically from growth and water quality.");
             }
 
@@ -95,8 +94,7 @@ public class GrowthActivity extends BaseNavActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String startDate = snapshot.child("start_date").getValue(String.class);
-                Number optimal = snapshot.child("days_in_optimal_temp").getValue(Number.class);
-                optimalDays = optimal == null ? 0 : optimal.intValue();
+                optimalDays = getInt(snapshot.child("days_in_optimal_temp"), 0);
                 int cultureDays = calculateDays(startDate);
                 database.child("growth").child("days_of_culture").setValue(cultureDays);
                 renderGrowth(cultureDays);
@@ -142,22 +140,13 @@ public class GrowthActivity extends BaseNavActivity {
     private void listenToSensorHealth() {
         database.child("aquarium").addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                float temp = getFloat(snapshot, "temp_val", 30f);
-                float salinity = getFloat(snapshot, "tds_val", 20f);
-                float turbidity = getFloat(snapshot, "turb_val", 0f);
-                float oxygen = getFloat(snapshot, "oxygen_val", getFloat(snapshot, "do_val", 6f));
-                float ph = getFloat(snapshot, "ph_val", 7.5f);
-                int issues = 0;
-                if (temp < 28f || temp > 32f) issues++;
-                if (salinity < 15f || salinity > 25f) issues++;
-                if (turbidity > 45f) issues++;
-                if (oxygen < 5f) issues++;
-                if (ph < 6.5f || ph > 8.5f) issues++;
-                float score = Math.max(0f, 100f - (issues * 18f));
-                database.child("growth").child("water_quality_score").setValue(score);
-                renderHealth(score);
-                recommendationsText.setText(buildRecommendations(temp, salinity, turbidity, oxygen, ph));
+            public void onDataChange(@NonNull DataSnapshot aquarium) {
+                float temp = getFloat(aquarium, "temp_val", 30f);
+                float salinity = getFloat(aquarium, "tds_val", 20f);
+                float turbidity = getFloat(aquarium, "turb_val", 0f);
+                float oxygen = getFloat(aquarium, "oxygen_val", getFloat(aquarium, "do_val", 6f));
+                float ph = getFloat(aquarium, "ph_val", 7.5f);
+                renderSensorHealth(temp, salinity, turbidity, oxygen, ph);
             }
 
             @Override
@@ -165,6 +154,37 @@ public class GrowthActivity extends BaseNavActivity {
                 Toast.makeText(GrowthActivity.this, "Sensor listener failed.", Toast.LENGTH_SHORT).show();
             }
         });
+
+        database.child("ShrimpHub").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot shrimpHub) {
+                if (!shrimpHub.exists()) {
+                    return;
+                }
+                float temp = getFloat(shrimpHub, "temperature", 30f);
+                float salinity = getFloat(shrimpHub, "tds", 20f);
+                float turbidity = getFloat(shrimpHub, "turbidity", 0f);
+                renderSensorHealth(temp, salinity, turbidity, 6f, 7.5f);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(GrowthActivity.this, "ShrimpHub sensor listener failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void renderSensorHealth(float temp, float salinity, float turbidity, float oxygen, float ph) {
+        int issues = 0;
+        if (temp < 28f || temp > 32f) issues++;
+        if (salinity < 15f || salinity > 25f) issues++;
+        if (turbidity > 45f) issues++;
+        if (oxygen < 5f) issues++;
+        if (ph < 6.5f || ph > 8.5f) issues++;
+        float score = Math.max(0f, 100f - (issues * 18f));
+        database.child("growth").child("water_quality_score").setValue(score);
+        renderHealth(score);
+        recommendationsText.setText(buildRecommendations(temp, salinity, turbidity, oxygen, ph));
     }
 
     private void listenToTrend() {
@@ -174,12 +194,12 @@ public class GrowthActivity extends BaseNavActivity {
                 List<Entry> entries = new ArrayList<>();
                 int index = 0;
                 for (DataSnapshot child : snapshot.getChildren()) {
-                    Number value = child.child("score").getValue(Number.class);
+                    Float value = getNullableFloat(child.child("score"));
                     if (value == null) {
-                        value = child.getValue(Number.class);
+                        value = getNullableFloat(child);
                     }
                     if (value != null) {
-                        entries.add(new Entry(index++, value.floatValue()));
+                        entries.add(new Entry(index++, value));
                     }
                 }
                 LineDataSet dataSet = new LineDataSet(entries, "Growth health");
@@ -225,8 +245,38 @@ public class GrowthActivity extends BaseNavActivity {
     }
 
     private float getFloat(DataSnapshot snapshot, String key, float fallback) {
-        Number value = snapshot.child(key).getValue(Number.class);
-        return value == null ? fallback : value.floatValue();
+        Float value = getNullableFloat(snapshot.child(key));
+        return value == null ? fallback : value;
+    }
+
+    private Float getNullableFloat(DataSnapshot snapshot) {
+        Object value = snapshot.getValue();
+        if (value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Float.parseFloat((String) value);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private int getInt(DataSnapshot snapshot, int fallback) {
+        Object value = snapshot.getValue();
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
     }
 
     private void showDatePicker() {

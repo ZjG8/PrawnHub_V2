@@ -4,6 +4,9 @@
     "tds_val": 0,
     "turb_val": 0,
     "water_lvl": 0.0,
+    "oxygen_val": 0.0,
+    "do_val": 0.0,
+    "ph_val": 0.0,
     "last_sync": ""
   },
   "settings": {
@@ -12,6 +15,9 @@
     "min_sal": 15,
     "max_sal": 25,
     "max_turb": 45,
+    "min_oxygen": 5.0,
+    "min_ph": 6.5,
+    "max_ph": 8.5,
     "feed_time": "08:00",
     "overflow_limit": 5.0,
     "target_harvest_days": 75
@@ -35,7 +41,10 @@
     "ammonia_risk": false,
     "overflow_risk": false,
     "temp_alert": false,
-    "sal_alert": false
+    "sal_alert": false,
+    "oxygen_alert": false,
+    "turbidity_alert": false,
+    "ph_alert": false
   },
   "growth": {
     "start_date": "",

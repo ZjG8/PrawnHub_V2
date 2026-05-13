@@ -32,42 +32,39 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:orientation="horizontal">
+            android:background="@drawable/card_background"
+            android:orientation="vertical">
 
-            <Spinner
-                android:id="@+id/rangeSpinner"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:background="@drawable/dropdown_background"
-                android:paddingLeft="16dp"
-                android:paddingRight="40dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Date Range"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-            <Spinner
-                android:id="@+id/sensorSpinner"
-                android:layout_width="0dp"
+            <Button
+                android:id="@+id/startDateTimeButton"
+                style="@style/ShrimpHubButton.Secondary"
+                android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginLeft="10dp"
-                android:layout_weight="1"
-                android:background="@drawable/dropdown_background"
-                android:paddingLeft="16dp"
-                android:paddingRight="40dp" />
+                android:layout_marginTop="10dp"
+                android:text="Start Date + Time" />
+
+            <Button
+                android:id="@+id/endDateTimeButton"
+                style="@style/ShrimpHubButton.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:text="End Date + Time" />
         </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:text="Important Events"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold" />
 
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/historyChart"
             android:layout_width="match_parent"
             android:layout_height="220dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/card_background" />
 
         <androidx.recyclerview.widget.RecyclerView
