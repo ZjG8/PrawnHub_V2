@@ -1,9 +1,10 @@
 // ============================================================
-// SHRIMPHUB v2 - ESP32 Firmware
+// SHRIMPHUB - ESP32 Firmware
 // IoT Smart Shrimp Farm Monitor & Controller
 // ============================================================
 
 #include <WiFi.h>
+#include <ArduinoOTA.h>
 #include <Firebase_ESP_Client.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
@@ -26,21 +27,23 @@
 #define USER_PASSWORD   "REPLACE_THIS_FIREBASE_AUTH_PASSWORD"
 // ============================================================
 
-// Keep these hardware pins aligned with plans/PrawnHub-Connect.md.
-#define ONE_WIRE_BUS    4
+#define ONE_WIRE_BUS    25
 #define TDS_PIN         34
 #define TURBIDITY_PIN   35
 #define TRIG_PIN        12
 #define ECHO_PIN        13
 
-#define IN1             25
-#define IN2             26
-#define IN3             27
-#define IN4             14
+// Stepper feeder pins from plans/STEPPERCURRY.md.
+#define IN1             32
+#define IN2             33
+#define IN3             18
+#define IN4             19
 
+// Relay pins from plans/STEPPERCURRY.md.
 #define RELAY_PUMP      16
-#define RELAY_FILTER    17
-#define RELAY_AERATOR   18
+#define RELAY_PUMP2     17
+#define RELAY_FILTER    27
+#define RELAY_AERATOR   5
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature tempSensor(&oneWire);
@@ -51,6 +54,7 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 bool rtcAvailable = false;
+bool otaStarted = false;
 float temperature = 0.0;
 float tdsValue = 0.0;
 float turbidityValue = 0.0;
@@ -63,10 +67,15 @@ float TURBIDITY_FACTOR = 1.0;
 
 unsigned long lastSensorRead = 0;
 unsigned long lastFirebasePush = 0;
-unsigned long lastFeedCheck = 0;
+unsigned long lastFeedMillis = 0;
+unsigned long lastFeedControlRead = 0;
+unsigned long lastScheduleCheck = 0;
+unsigned long lastMotorStepMillis = 0;
 const long SENSOR_INTERVAL = 3000;
 const long FIREBASE_INTERVAL = 15000;
-const long FEED_CHECK_INTERVAL = 60000;
+const long FEED_CONTROL_INTERVAL = 1000;
+const long SCHEDULE_CHECK_INTERVAL = 1000;
+const unsigned long FEED_INTERVAL = 21600000;
 const int HISTORY_MAX_ENTRIES = 100;
 unsigned long historySequence = 0;
 
@@ -80,6 +89,24 @@ float min_oxygen = 5.0;
 float min_ph = 6.5;
 float max_ph = 8.5;
 String feed_time = "08:00";
+unsigned long feedIntervalMillis = FEED_INTERVAL;
+int feedAmount = 512;
+int feedCount = 0;
+bool autoFeedEnabled = true;
+bool feeding = false;
+bool feedRequested = false;
+String feedRequestType = "manual";
+String lastScheduleKey = "";
+String activeFeedType = "manual";
+int activeFeedAmount = 0;
+int feedStepsRemaining = 0;
+int feedSpeedDelay = 2;
+int feedHour1 = 8;
+int feedMinute1 = 0;
+int feedHour2 = 12;
+int feedMinute2 = 0;
+int feedHour3 = 18;
+int feedMinute3 = 0;
 
 int stepIndex = 0;
 int stepSequence[8][4] = {
@@ -119,6 +146,25 @@ void connectToFirebase() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
   Serial.println("[Firebase] Connecting...");
+}
+
+void setupOTA() {
+  if (otaStarted) {
+    return;
+  }
+  ArduinoOTA.setHostname("ShrimpHub-ESP32");
+  ArduinoOTA.onStart([]() {
+    Serial.println("[OTA] Update start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\n[OTA] Update complete");
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("[OTA] Error[%u]\n", error);
+  });
+  ArduinoOTA.begin();
+  otaStarted = true;
+  Serial.println("[OTA] Ready");
 }
 
 float readTemperature() {
@@ -169,6 +215,17 @@ String getTimestamp() {
   return String(buf);
 }
 
+unsigned long getUnixTime() {
+  if (!rtcAvailable) {
+    return millis() / 1000UL;
+  }
+  return rtc.now().unixtime();
+}
+
+String getReadableDate() {
+  return getTimestamp();
+}
+
 String historyKey(unsigned long sequence) {
   return "/history/log_" + String(sequence);
 }
@@ -203,35 +260,115 @@ void logHistoryRecord(const String &paramType, float value, const String &status
   trimOldHistoryEntry();
 }
 
-void stepMotor() {
+void releaseStepper() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+void stepMotor(int steps, int speedDelay) {
+  if (steps <= 0) {
+    return;
+  }
+
+  unsigned long now = millis();
+  unsigned long delayMs = (unsigned long)max(1, speedDelay);
+  if (now - lastMotorStepMillis < delayMs) {
+    return;
+  }
+
+  lastMotorStepMillis = now;
   digitalWrite(IN1, stepSequence[stepIndex][0]);
   digitalWrite(IN2, stepSequence[stepIndex][1]);
   digitalWrite(IN3, stepSequence[stepIndex][2]);
   digitalWrite(IN4, stepSequence[stepIndex][3]);
   stepIndex = (stepIndex + 1) % 8;
+  feedStepsRemaining--;
 }
 
-void dispenseFeed(int stepsCount) {
-  Serial.println("[FEED] Dispensing feed...");
-  for (int i = 0; i < stepsCount; i++) {
-    stepMotor();
-    delay(2);
+void writeFeederStatus(bool active) {
+  if (!Firebase.ready()) return;
+  Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/feeding", active);
+}
+
+void writeFeedResult(int stepsCount, const String &type) {
+  if (!Firebase.ready()) return;
+
+  unsigned long unixTime = getUnixTime();
+  String date = getReadableDate();
+  String logKey = "/ShrimpHub/feedLogs/log_" + String(unixTime) + "_" + String(millis());
+
+  feedCount++;
+  FirebaseJson json;
+  json.set("timestamp", (int)unixTime);
+  json.set("date", date);
+  json.set("feedAmount", stepsCount);
+  json.set("type", type);
+
+  Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedCount", feedCount);
+  Firebase.RTDB.setString(&fbdo, "/ShrimpHub/feeder/lastFeedTime", date);
+  Firebase.RTDB.setJSON(&fbdo, logKey, &json);
+}
+
+void startFeeding(int stepsCount, const String &type) {
+  if (feeding) {
+    return;
   }
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, LOW);
-  Serial.println("[FEED] Done.");
+
+  activeFeedAmount = max(1, stepsCount);
+  activeFeedType = type;
+  feedStepsRemaining = activeFeedAmount;
+  lastMotorStepMillis = 0;
+  feeding = true;
+  writeFeederStatus(true);
+  Serial.println("FEEDING START");
+}
+
+void finishFeeding() {
+  releaseStepper();
+  Serial.println("FEED DONE");
+  writeFeedResult(activeFeedAmount, activeFeedType);
 
   if (Firebase.ready()) {
+    Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/feedNow", false);
+    Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/feeding", false);
     logHistoryRecord("feed", 1.0, "feed dispensed", getTimestamp());
   }
+  activeFeedAmount = 0;
+  feedStepsRemaining = 0;
+  feeding = false;
+}
+
+void cancelFeeding() {
+  releaseStepper();
+  Serial.println("FEED STOPPED");
+  if (Firebase.ready()) {
+    Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/feedNow", false);
+    Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/feeding", false);
+  }
+  activeFeedAmount = 0;
+  feedStepsRemaining = 0;
+  feedRequested = false;
+  feeding = false;
+}
+
+void requestFeed(const String &type) {
+  if (feeding || feedRequested) {
+    return;
+  }
+  feedRequestType = type;
+  feedRequested = true;
 }
 
 void setFirebaseBool(const String &path, bool value) {
   if (Firebase.ready()) {
     Firebase.RTDB.setBool(&fbdo, path, value);
   }
+}
+
+void setRelay(int pin, bool active) {
+  digitalWrite(pin, active ? LOW : HIGH);
 }
 
 void checkAmmoniaRisk() {
@@ -241,16 +378,16 @@ void checkAmmoniaRisk() {
   if (risk) {
     Serial.println("[ALERT] HIGH AMMONIA RISK! Activating filter and pump.");
     setFirebaseBool("/alerts/ammonia_risk", true);
-    setFirebaseBool("/control/filter_stat", true);
-    setFirebaseBool("/control/pump_stat", true);
-    digitalWrite(RELAY_FILTER, LOW);
-    digitalWrite(RELAY_PUMP, LOW);
+    setFirebaseBool("/ShrimpHub/control/filter", true);
+    setFirebaseBool("/ShrimpHub/control/pump1", true);
+    setRelay(RELAY_FILTER, true);
+    setRelay(RELAY_PUMP, true);
   } else if (clear) {
     setFirebaseBool("/alerts/ammonia_risk", false);
-    setFirebaseBool("/control/filter_stat", false);
-    setFirebaseBool("/control/pump_stat", false);
-    digitalWrite(RELAY_FILTER, HIGH);
-    digitalWrite(RELAY_PUMP, HIGH);
+    setFirebaseBool("/ShrimpHub/control/filter", false);
+    setFirebaseBool("/ShrimpHub/control/pump1", false);
+    setRelay(RELAY_FILTER, false);
+    setRelay(RELAY_PUMP, false);
   }
 }
 
@@ -258,11 +395,11 @@ void checkOverflow() {
   if (waterLevel > overflow_limit) {
     Serial.println("[ALERT] WATER LEVEL LOW! Activating pump.");
     setFirebaseBool("/alerts/overflow_risk", true);
-    setFirebaseBool("/control/pump_stat", true);
-    digitalWrite(RELAY_PUMP, LOW);
+    setFirebaseBool("/ShrimpHub/control/pump1", true);
+    setRelay(RELAY_PUMP, true);
   } else {
     setFirebaseBool("/alerts/overflow_risk", false);
-    digitalWrite(RELAY_PUMP, HIGH);
+    setRelay(RELAY_PUMP, false);
   }
 }
 
@@ -284,18 +421,53 @@ void updateAlertFlags() {
   setFirebaseBool("/alerts/ph_alert", phAlert);
 }
 
-void checkFeedSchedule() {
-  if (!rtcAvailable) {
+void handleFeeder() {
+  if (feeding) {
+    stepMotor(feedStepsRemaining, feedSpeedDelay);
+    if (feedStepsRemaining <= 0) {
+      finishFeeding();
+    }
     return;
   }
-  DateTime now = rtc.now();
-  char currentTimeBuffer[6];
-  sprintf(currentTimeBuffer, "%02d:%02d", now.hour(), now.minute());
-  String currentTime = String(currentTimeBuffer);
-  if (currentTime == feed_time) {
-    Serial.println("[FEED] Scheduled feed time reached: " + currentTime);
-    dispenseFeed(512);
+
+  if (feedRequested) {
+    String type = feedRequestType;
+    feedRequested = false;
+    lastFeedMillis = millis();
+    startFeeding(feedAmount, type);
   }
+}
+
+String scheduleKey(DateTime now) {
+  char key[13];
+  sprintf(key, "%04d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute());
+  return String(key);
+}
+
+bool isScheduleTime(DateTime now, int hour, int minute) {
+  return now.hour() == hour && now.minute() == minute;
+}
+
+void checkScheduledFeeding() {
+  if (!rtcAvailable || !autoFeedEnabled || feeding || feedRequested) {
+    return;
+  }
+
+  DateTime now = rtc.now();
+  bool due = isScheduleTime(now, feedHour1, feedMinute1)
+          || isScheduleTime(now, feedHour2, feedMinute2)
+          || isScheduleTime(now, feedHour3, feedMinute3);
+  if (!due) {
+    return;
+  }
+
+  String key = scheduleKey(now);
+  if (key == lastScheduleKey) {
+    return;
+  }
+
+  lastScheduleKey = key;
+  requestFeed("scheduled");
 }
 
 void pushSensorData() {
@@ -313,6 +485,10 @@ void pushSensorData() {
   Firebase.RTDB.setFloat(&fbdo, "/aquarium/do_val", oxygenValue);
   Firebase.RTDB.setFloat(&fbdo, "/aquarium/ph_val", phValue);
   Firebase.RTDB.setString(&fbdo, "/aquarium/last_sync", ts);
+  Firebase.RTDB.setFloat(&fbdo, "/ShrimpHub/temperature", temperature);
+  Firebase.RTDB.setFloat(&fbdo, "/ShrimpHub/tds", tdsValue);
+  Firebase.RTDB.setFloat(&fbdo, "/ShrimpHub/turbidity", turbidityValue);
+  Firebase.RTDB.setFloat(&fbdo, "/ShrimpHub/waterLevel", waterLevel);
 
   bool tempAlert = (temperature > max_temp || temperature < min_temp);
   bool salAlert = (tdsValue < min_sal || tdsValue > max_sal);
@@ -339,22 +515,124 @@ void readSettingsFromFirebase() {
   if (Firebase.RTDB.getFloat(&fbdo, "/settings/min_ph")) min_ph = fbdo.floatData();
   if (Firebase.RTDB.getFloat(&fbdo, "/settings/max_ph")) max_ph = fbdo.floatData();
   if (Firebase.RTDB.getString(&fbdo, "/settings/feed_time")) feed_time = fbdo.stringData();
+  if (Firebase.RTDB.getInt(&fbdo, "/settings/feed_interval_hours")) {
+    int intervalHours = fbdo.intData();
+    feedIntervalMillis = intervalHours > 0 ? (unsigned long)intervalHours * 3600000UL : FEED_INTERVAL;
+  }
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedAmount")) feedAmount = max(1, fbdo.intData());
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedCount")) feedCount = max(0, fbdo.intData());
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/feeder/autoFeedEnabled")) autoFeedEnabled = fbdo.boolData();
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedHour1")) feedHour1 = constrain(fbdo.intData(), 0, 23);
+  else if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/schedule/feedHour1")) feedHour1 = constrain(fbdo.intData(), 0, 23);
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedMinute1")) feedMinute1 = constrain(fbdo.intData(), 0, 59);
+  else if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/schedule/feedMinute1")) feedMinute1 = constrain(fbdo.intData(), 0, 59);
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedHour2")) feedHour2 = constrain(fbdo.intData(), 0, 23);
+  else if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/schedule/feedHour2")) feedHour2 = constrain(fbdo.intData(), 0, 23);
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedMinute2")) feedMinute2 = constrain(fbdo.intData(), 0, 59);
+  else if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/schedule/feedMinute2")) feedMinute2 = constrain(fbdo.intData(), 0, 59);
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedHour3")) feedHour3 = constrain(fbdo.intData(), 0, 23);
+  else if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/schedule/feedHour3")) feedHour3 = constrain(fbdo.intData(), 0, 23);
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedMinute3")) feedMinute3 = constrain(fbdo.intData(), 0, 59);
+  else if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/schedule/feedMinute3")) feedMinute3 = constrain(fbdo.intData(), 0, 59);
+}
+
+void initializeFeederDefaults() {
+  if (!Firebase.ready()) return;
+
+  Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/feeding", false);
+  Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/feedNow", false);
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedAmount")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedAmount", feedAmount);
+  } else {
+    feedAmount = max(1, fbdo.intData());
+  }
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedCount")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedCount", feedCount);
+  } else {
+    feedCount = max(0, fbdo.intData());
+  }
+  if (!Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/feeder/autoFeedEnabled")) {
+    Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/feeder/autoFeedEnabled", autoFeedEnabled);
+  } else {
+    autoFeedEnabled = fbdo.boolData();
+  }
+}
+
+void initializeScheduleDefaults() {
+  if (!Firebase.ready()) return;
+
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedHour1")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedHour1", feedHour1);
+  } else {
+    feedHour1 = constrain(fbdo.intData(), 0, 23);
+  }
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedMinute1")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedMinute1", feedMinute1);
+  } else {
+    feedMinute1 = constrain(fbdo.intData(), 0, 59);
+  }
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedHour2")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedHour2", feedHour2);
+  } else {
+    feedHour2 = constrain(fbdo.intData(), 0, 23);
+  }
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedMinute2")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedMinute2", feedMinute2);
+  } else {
+    feedMinute2 = constrain(fbdo.intData(), 0, 59);
+  }
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedHour3")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedHour3", feedHour3);
+  } else {
+    feedHour3 = constrain(fbdo.intData(), 0, 23);
+  }
+  if (!Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedMinute3")) {
+    Firebase.RTDB.setInt(&fbdo, "/ShrimpHub/feeder/feedMinute3", feedMinute3);
+  } else {
+    feedMinute3 = constrain(fbdo.intData(), 0, 59);
+  }
 }
 
 void readControlFromFirebase() {
   if (!Firebase.ready()) return;
-  if (Firebase.RTDB.getBool(&fbdo, "/control/pump_stat")) {
-    digitalWrite(RELAY_PUMP, fbdo.boolData() ? LOW : HIGH);
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/control/pump1")) {
+    setRelay(RELAY_PUMP, fbdo.boolData());
   }
-  if (Firebase.RTDB.getBool(&fbdo, "/control/filter_stat")) {
-    digitalWrite(RELAY_FILTER, fbdo.boolData() ? LOW : HIGH);
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/control/pump2")) {
+    setRelay(RELAY_PUMP2, fbdo.boolData());
   }
-  if (Firebase.RTDB.getBool(&fbdo, "/control/aerator_stat")) {
-    digitalWrite(RELAY_AERATOR, fbdo.boolData() ? LOW : HIGH);
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/control/filter")) {
+    setRelay(RELAY_FILTER, fbdo.boolData());
   }
-  if (Firebase.RTDB.getBool(&fbdo, "/control/motor_trig") && fbdo.boolData()) {
-    dispenseFeed(512);
-    Firebase.RTDB.setBool(&fbdo, "/control/motor_trig", false);
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/control/aerator")) {
+    setRelay(RELAY_AERATOR, fbdo.boolData());
+  }
+}
+
+void readFeedControlFromFirebase() {
+  if (!Firebase.ready()) return;
+  if (Firebase.RTDB.getInt(&fbdo, "/ShrimpHub/feeder/feedAmount")) {
+    feedAmount = max(1, fbdo.intData());
+  }
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/feeder/autoFeedEnabled")) {
+    autoFeedEnabled = fbdo.boolData();
+  }
+  if (feeding
+      && Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/feeder/feeding")
+      && !fbdo.boolData()) {
+    cancelFeeding();
+    return;
+  }
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/feeder/feedNow") && fbdo.boolData()) {
+    requestFeed("manual");
+  }
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/control/feed") && fbdo.boolData()) {
+    requestFeed("manual");
+    Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/control/feed", false);
+  }
+  if (Firebase.RTDB.getBool(&fbdo, "/ShrimpHub/control/motor_trig") && fbdo.boolData()) {
+    requestFeed("manual");
+    Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/control/motor_trig", false);
   }
 }
 
@@ -362,7 +640,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println("\n=============================");
-  Serial.println("   ShrimpHub v2 Starting...");
+  Serial.println("   ShrimpHub Starting...");
   Serial.println("=============================");
 
   tempSensor.begin();
@@ -377,11 +655,13 @@ void setup() {
   }
 
   pinMode(RELAY_PUMP, OUTPUT);
+  pinMode(RELAY_PUMP2, OUTPUT);
   pinMode(RELAY_FILTER, OUTPUT);
   pinMode(RELAY_AERATOR, OUTPUT);
-  digitalWrite(RELAY_PUMP, HIGH);
-  digitalWrite(RELAY_FILTER, HIGH);
-  digitalWrite(RELAY_AERATOR, HIGH);
+  setRelay(RELAY_PUMP, false);
+  setRelay(RELAY_PUMP2, false);
+  setRelay(RELAY_FILTER, false);
+  setRelay(RELAY_AERATOR, false);
 
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
@@ -389,20 +669,29 @@ void setup() {
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
+  releaseStepper();
 
   connectToWiFi();
   if (WiFi.status() == WL_CONNECTED) {
+    setupOTA();
     connectToFirebase();
     delay(3000);
     syncHistorySequenceFromFirebase();
+    initializeFeederDefaults();
+    initializeScheduleDefaults();
     readSettingsFromFirebase();
   }
 
+  lastFeedMillis = millis();
   Serial.println("[READY] ShrimpHub is running!");
 }
 
 void loop() {
   unsigned long now = millis();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    ArduinoOTA.handle();
+  }
 
   if (now - lastSensorRead >= SENSOR_INTERVAL) {
     lastSensorRead = now;
@@ -434,6 +723,7 @@ void loop() {
     }
 
     if (WiFi.status() == WL_CONNECTED) {
+      setupOTA();
       pushSensorData();
       readSettingsFromFirebase();
       readControlFromFirebase();
@@ -447,8 +737,13 @@ void loop() {
     }
   }
 
-  if (now - lastFeedCheck >= FEED_CHECK_INTERVAL) {
-    lastFeedCheck = now;
-    checkFeedSchedule();
+  if (now - lastFeedControlRead >= FEED_CONTROL_INTERVAL) {
+    lastFeedControlRead = now;
+    readFeedControlFromFirebase();
   }
+  if (now - lastScheduleCheck >= SCHEDULE_CHECK_INTERVAL) {
+    lastScheduleCheck = now;
+    checkScheduledFeeding();
+  }
+  handleFeeder();
 }

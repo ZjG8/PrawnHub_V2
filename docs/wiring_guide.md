@@ -6,7 +6,7 @@ Use this guide with the ESP32 powered off. Connect one part at a time, test it, 
 
 | Component | Wire / Signal | ESP32 Pin |
 |---|---|---|
-| DS18B20 temperature sensor | Data | GPIO 4 |
+| DS18B20 temperature sensor | Data | GPIO 25 |
 | DS18B20 temperature sensor | VCC | 3.3V |
 | DS18B20 temperature sensor | GND | GND |
 | TDS / salinity sensor | Analog output | GPIO 34 |
@@ -23,14 +23,14 @@ Use this guide with the ESP32 powered off. Connect one part at a time, test it, 
 | RTC DS3231 | SCL | GPIO 22 |
 | RTC DS3231 | VCC | 3.3V or 5V, depending on module |
 | RTC DS3231 | GND | GND |
-| ULN2003 stepper driver | IN1 | GPIO 25 |
-| ULN2003 stepper driver | IN2 | GPIO 26 |
-| ULN2003 stepper driver | IN3 | GPIO 27 |
-| ULN2003 stepper driver | IN4 | GPIO 14 |
-| 4-channel relay | Relay 1 input, water pump | GPIO 32 |
-| 4-channel relay | Relay 2 input, filter | GPIO 33 |
-| 4-channel relay | Relay 3 input, aerator | GPIO 5 |
-| 4-channel relay | Relay 4 input, LED light | GPIO 18 |
+| ULN2003 stepper driver | IN1 | GPIO 32 |
+| ULN2003 stepper driver | IN2 | GPIO 33 |
+| ULN2003 stepper driver | IN3 | GPIO 18 |
+| ULN2003 stepper driver | IN4 | GPIO 19 |
+| 4-channel relay | Relay 1 input, water pump | GPIO 16 |
+| 4-channel relay | Relay 2 input, second water pump | GPIO 17 |
+| 4-channel relay | Relay 3 input, filter | GPIO 27 |
+| 4-channel relay | Relay 4 input, aerator | GPIO 5 |
 
 ## Power Notes
 
@@ -49,7 +49,7 @@ All low-voltage modules must share a common GND with the ESP32.
 3. Turbidity sensor: test clear water, then cloudy water. Success looks like cloudy water reading higher.
 4. Ultrasonic sensor: move a flat object closer to the sensor. Success looks like the distance number getting smaller.
 5. RTC DS3231: restart the ESP32. Success looks like the printed time continuing instead of resetting to zero.
-6. Stepper motor: set `/control/motor_trig` to `true` in Firebase. Success looks like the 28BYJ-48 motor rotating once.
+6. Stepper motor: set `/ShrimpHub/feeder/feedNow` to `true` in Firebase. Success looks like the 28BYJ-48 motor rotating once.
 7. Relays: toggle pump, filter, and aerator in the app. Success looks like the matching relay clicking.
 
 ## Safety Rules

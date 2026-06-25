@@ -17,8 +17,6 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.Locale;
 
 public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActivity {
-    private TextView onlineStatus;
-    private TextView syncStatus;
     private TextView temperatureValue;
     private TextView salinityValue;
     private TextView waterLevelValue;
@@ -43,8 +41,6 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
     }
 
     private void bindViews() {
-        onlineStatus = findViewById(R.id.onlineStatus);
-        syncStatus = findViewById(R.id.syncStatus);
         temperatureValue = findViewById(R.id.temperatureValue);
         salinityValue = findViewById(R.id.salinityValue);
         waterLevelValue = findViewById(R.id.waterLevelValue);
@@ -80,8 +76,6 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                onlineStatus.setText("OFFLINE");
-                syncStatus.setText("SYNC ERROR");
                 Toast.makeText(AdminDashboardActivity.this, "Sensor summary unavailable.", Toast.LENGTH_SHORT).show();
             }
         });
@@ -101,8 +95,6 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                onlineStatus.setText("OFFLINE");
-                syncStatus.setText("SYNC ERROR");
             }
         });
     }
@@ -110,10 +102,8 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
     private void renderSensorSummary(float temperature, float salinity, float waterLevel, float turbidity) {
         temperatureValue.setText(String.format(Locale.US, "%.1f C", temperature));
         salinityValue.setText(String.format(Locale.US, "%.0f ppt", salinity));
-        waterLevelValue.setText(String.format(Locale.US, "%.1f cm", waterLevel));
+        waterLevelValue.setText(String.format(Locale.US, "%.1f ft", waterLevel / 30.48f));
         turbidityValue.setText(String.format(Locale.US, "%.0f NTU", turbidity));
-        onlineStatus.setText("ONLINE");
-        syncStatus.setText("SYNCHRONIZED");
     }
 
     private void listenToFeedingSettings() {

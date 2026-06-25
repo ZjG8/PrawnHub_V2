@@ -6,7 +6,7 @@
 - [ ] UT02 - TDS sensor reads a non-zero value in saltwater
 - [ ] UT03 - Turbidity reads higher in cloudy water than clear water
 - [ ] UT04 - Ultrasonic reads a smaller number when water level is higher
-- [ ] UT05 - Stepper motor rotates when `motor_trig` is set to true in Firebase
+- [ ] UT05 - Stepper motor rotates when `/ShrimpHub/feeder/feedNow` is set to true in Firebase
 
 ## Integration Tests
 

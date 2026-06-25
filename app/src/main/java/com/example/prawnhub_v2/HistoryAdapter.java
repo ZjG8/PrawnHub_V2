@@ -33,9 +33,9 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
     @Override
     public void onBindViewHolder(@NonNull HistoryViewHolder holder, int position) {
         HistoryItem item = items.get(position);
-        holder.parameter.setText(formatStatusIcon(item.status) + " " + formatTime(item.timestamp));
-        holder.timestamp.setText(formatMessage(item.parameter, item.value, item.status));
-        holder.value.setText("Parameter: " + formatParameter(item.parameter));
+        holder.parameter.setText("Sensor: " + formatParameter(item.parameter));
+        holder.timestamp.setText("Timestamp: " + formatTime(item.timestamp));
+        holder.value.setText(String.format(Locale.US, "Value: %.1f%s", item.value, unitFor(item.parameter)));
         holder.status.setText("Status: " + item.status);
     }
 
@@ -48,6 +48,10 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         if (raw == null || raw.isEmpty()) {
             return "Unknown";
         }
+        if ("temp".equals(raw) || "temperature".equals(raw)) return "Temperature";
+        if ("salinity".equals(raw) || "tds".equals(raw)) return "Salinity";
+        if ("turbidity".equals(raw)) return "Turbidity";
+        if ("water_level".equals(raw) || "waterLevel".equals(raw)) return "Water Level";
         return raw.replace("_", " ");
     }
 
@@ -61,41 +65,12 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         }
     }
 
-    private String formatStatusIcon(String status) {
-        if (status == null) {
-            return "!";
-        }
-        return "normal".equalsIgnoreCase(status) || "stable".equalsIgnoreCase(status) ? "LOG" : "ALERT";
-    }
-
-    private String formatMessage(String parameter, float value, String status) {
-        String unit = unitFor(parameter);
-        if ("temp".equals(parameter) || "temperature".equals(parameter)) {
-            return String.format(Locale.US, "Temperature recorded: %.1f%s", value, unit);
-        }
-        if ("salinity".equals(parameter)) {
-            return String.format(Locale.US, "Salinity detected: %.1f%s", value, unit);
-        }
-        if ("turbidity".equals(parameter)) {
-            String label = isWarning(status) ? "Turbidity spike detected" : "Turbidity recorded";
-            return String.format(Locale.US, "%s: %.1f%s", label, value, unit);
-        }
-        if ("water_level".equals(parameter) || "waterLevel".equals(parameter)) {
-            return String.format(Locale.US, "Water Level: %.1f%s", value, unit);
-        }
-        return String.format(Locale.US, "%s recorded: %.1f%s", formatParameter(parameter), value, unit);
-    }
-
     private String unitFor(String parameter) {
         if ("temp".equals(parameter) || "temperature".equals(parameter)) return " C";
-        if ("salinity".equals(parameter)) return " ppm";
+        if ("salinity".equals(parameter) || "tds".equals(parameter)) return " ppt";
         if ("turbidity".equals(parameter)) return " NTU";
-        if ("water_level".equals(parameter) || "waterLevel".equals(parameter)) return " cm";
+        if ("water_level".equals(parameter) || "waterLevel".equals(parameter)) return " ft";
         return "";
-    }
-
-    private boolean isWarning(String status) {
-        return status != null && !"normal".equalsIgnoreCase(status) && !"stable".equalsIgnoreCase(status);
     }
 
     static class HistoryViewHolder extends RecyclerView.ViewHolder {

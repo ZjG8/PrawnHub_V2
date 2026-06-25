@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/surface_soft"
@@ -25,11 +26,10 @@
                 <Button
                     android:id="@+id/backButton"
                     style="@style/ShrimpHubButton.Nav"
-                    android:layout_width="52dp"
+                    android:layout_width="96dp"
                     android:layout_height="52dp"
                     android:contentDescription="Back"
-                    android:text="&lt;"
-                    android:textSize="20sp" />
+                    android:text="Back" />
 
                 <TextView
                     android:id="@+id/settingsTitle"
@@ -89,23 +89,99 @@
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Max Temperature" />
-                <EditText android:id="@+id/maxTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max Temperature" android:inputType="numberDecimal" />
+                <TextView
+                    style="@style/ShrimpHubFieldLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Temperature" />
 
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min Temperature" />
-                <EditText android:id="@+id/minTempInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min Temperature" android:inputType="numberDecimal" />
+                <com.google.android.material.slider.RangeSlider
+                    android:id="@+id/temperatureRangeSlider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:contentDescription="Temperature threshold range"
+                    app:labelBehavior="gone" />
 
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Max Salinity" />
-                <EditText android:id="@+id/maxSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max Salinity" android:inputType="number" />
+                <TextView
+                    android:id="@+id/temperatureRangeValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Min: 28.0 C                    Max: 32.0 C"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
 
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Min Salinity" />
-                <EditText android:id="@+id/minSalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Min Salinity" android:inputType="number" />
+                <TextView
+                    style="@style/ShrimpHubFieldLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Salinity" />
 
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Max Turbidity" />
-                <EditText android:id="@+id/maxTurbInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Max Turbidity" android:inputType="numberDecimal" />
+                <com.google.android.material.slider.RangeSlider
+                    android:id="@+id/salinityRangeSlider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:contentDescription="Salinity threshold range"
+                    app:labelBehavior="gone" />
 
-                <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Overflow Limit" />
-                <EditText android:id="@+id/overflowInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Overflow Limit" android:inputType="numberDecimal" />
+                <TextView
+                    android:id="@+id/salinityRangeValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Min: 15 ppt                    Max: 25 ppt"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    style="@style/ShrimpHubFieldLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Turbidity" />
+
+                <TextView
+                    android:id="@+id/turbidityLimitValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Min: 0 NTU        Max: 45 NTU"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.slider.RangeSlider
+                    android:id="@+id/turbidityLimitSlider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:contentDescription="Turbidity threshold range"
+                    app:labelBehavior="gone" />
+
+                <TextView
+                    style="@style/ShrimpHubFieldLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Overflow Limit" />
+
+                <TextView
+                    android:id="@+id/overflowLimitValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Current: 5 ft"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/overflowLimitSlider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:contentDescription="Overflow threshold"
+                    app:labelBehavior="gone" />
             </LinearLayout>
 
             <LinearLayout
@@ -129,7 +205,7 @@
                 <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Feeding Interval" />
                 <EditText android:id="@+id/feedIntervalInput" style="@style/ShrimpHubInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="6dp" android:hint="Feeding Interval" android:inputType="number" />
 
-                <Switch android:id="@+id/midnightFeedSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:text="Auto-feed during sleep mode" android:textColor="@color/text_primary" />
+                <Switch android:id="@+id/midnightFeedSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:text="Auto Feed" android:textColor="@color/text_primary" />
             </LinearLayout>
 
             <LinearLayout
@@ -150,6 +226,59 @@
                 <Switch android:id="@+id/soundSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:text="Sound alert" android:textColor="@color/text_primary" />
                 <Switch android:id="@+id/vibrateSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Vibrate" android:textColor="@color/text_primary" />
                 <Switch android:id="@+id/pushSwitch" android:layout_width="match_parent" android:layout_height="52dp" android:text="Push notifications" android:textColor="@color/text_primary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Appearance"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    style="@style/ShrimpHubFieldLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Theme" />
+
+                <RadioGroup
+                    android:id="@+id/themeRadioGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/themeLightRadio"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="Light Mode"
+                        android:textColor="@color/text_primary" />
+
+                    <RadioButton
+                        android:id="@+id/themeDarkRadio"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="Dark Mode"
+                        android:textColor="@color/text_primary" />
+
+                    <RadioButton
+                        android:id="@+id/themeSystemRadio"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:checked="true"
+                        android:text="Follow System"
+                        android:textColor="@color/text_primary" />
+                </RadioGroup>
             </LinearLayout>
 
             <Button

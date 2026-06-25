@@ -1,14 +1,4 @@
 {
-  "aquarium": {
-    "temp_val": 0.0,
-    "tds_val": 0,
-    "turb_val": 0,
-    "water_lvl": 0.0,
-    "oxygen_val": 0.0,
-    "do_val": 0.0,
-    "ph_val": 0.0,
-    "last_sync": ""
-  },
   "settings": {
     "max_temp": 32.0,
     "min_temp": 28.0,
@@ -19,22 +9,36 @@
     "min_ph": 6.5,
     "max_ph": 8.5,
     "feed_time": "08:00",
+    "feed_interval_hours": 6,
     "overflow_limit": 5.0,
     "target_harvest_days": 75
   },
-  "control": {
-    "pump_stat": false,
-    "filter_stat": false,
-    "motor_trig": false,
-    "aerator_stat": false,
-    "op_mode": "auto"
-  },
-  "history": {
-    "placeholder": {
-      "log_id": "init",
-      "timestamp": "2025-01-01 00:00:00",
-      "param_type": "temp",
-      "rec_val": 0.0
+  "ShrimpHub": {
+    "temperature": 0.0,
+    "tds": 0.0,
+    "turbidity": 0.0,
+    "waterLevel": 0.0,
+    "control": {
+      "pump1": false,
+      "pump2": false,
+      "pump3": false
+    },
+    "feeder": {
+      "feedNow": false,
+      "feeding": false,
+      "feedCount": 0,
+      "lastFeedTime": "--",
+      "feedAmount": 512,
+      "autoFeedEnabled": false
+    },
+    "history": {
+      "placeholder": {
+        "timestamp": 0,
+        "temperature": 0.0,
+        "tds": 0.0,
+        "turbidity": 0.0,
+        "waterLevel": 0.0
+      }
     }
   },
   "alerts": {

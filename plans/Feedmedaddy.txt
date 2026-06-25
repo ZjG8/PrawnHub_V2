@@ -1,0 +1,175 @@
+Create a modern Android UI design for an IoT aquaculture system called “PrawnHub V2 Smart Monitoring System”.
+
+The app uses Firebase Realtime Database connected to an ESP32 system controlling sensors, pumps, and a stepper motor feeder.
+
+The design must follow a clean, professional agricultural IoT dashboard style (dark + light modern cards, blue/green aquatic theme, real-time data focus).
+
+---
+
+ROLE STRUCTURE:
+
+* Admin
+* Farmer
+
+Both roles share the same dashboard layout but with different permissions.
+
+---
+
+GENERAL REQUIREMENTS:
+
+* Single Dashboard per role (NO separate feeding page)
+* Feeding controls must be integrated inside the main dashboard
+* Real-time Firebase data updates
+* Clean card-based UI
+* Smooth modern Material Design 3 style
+* Minimal but data-rich interface
+
+---
+
+FIREBASE STRUCTURE:
+ShrimpHub/
+
+* temperature
+* tds
+* turbidity
+* waterLevel
+* history
+* control/
+
+  * pump1
+  * pump2
+* feeder/
+
+  * feedNow
+  * feeding
+  * feedCount
+  * lastFeedTime
+  * feedAmount
+  * autoFeedEnabled
+
+---
+
+MAIN DASHBOARD LAYOUT (ADMIN + FARMER):
+
+Top Bar:
+
+* App Name: PrawnHub V2
+* Role indicator (Admin / Farmer)
+* Connection status (Firebase Online / ESP32 Online)
+
+Live Sensor Cards Grid:
+
+* Temperature (°C)
+* TDS (ppm)
+* Turbidity (NTU)
+* Water Level (cm)
+
+Each card:
+
+* Large numeric value
+* Small status label (Normal / Warning / Critical)
+* Real-time animation indicator (pulse or dot)
+
+---
+
+SYSTEM CONTROL SECTION (INSIDE DASHBOARD ONLY):
+
+Pump Controls:
+
+* Toggle switch Pump 1
+* Toggle switch Pump 2
+
+Feeder Control Section:
+
+* “Feed Now” button (primary action)
+* Feeding status indicator (Idle / Feeding / Done)
+* Feed Count display
+* Last Feed Time display
+* Feed Amount selector (Small 256 / Medium 512 / Large 1024)
+* Auto Feed toggle switch
+
+Rules:
+
+* When Feed Now is triggered:
+  Firebase /ShrimpHub/feeder/feedNow = true
+* Show loading animation while feeding = true
+* Disable button while feeding is active
+
+---
+
+ALERT SECTION:
+
+* Real-time alert banner
+* Color-coded (green, yellow, red)
+* Shows pump status, water quality warnings, feeding status
+
+---
+
+HISTORY PREVIEW SECTION:
+
+* Latest 5 sensor logs from Firebase
+* Simple list format with timestamp
+
+---
+
+NAVIGATION (BOTTOM BAR):
+
+* Dashboard (Main)
+* History
+* Growth Analytics
+* Settings
+
+BUT:
+
+* Feeding is NOT a separate tab
+* Feeding is embedded inside Dashboard only
+
+---
+
+ADMIN DASHBOARD EXTRA FEATURES:
+
+* User management card (view only quick summary)
+* System settings preview (thresholds, alerts)
+* Export report button (PDF/Excel)
+
+FARMER DASHBOARD EXTRA FEATURES:
+
+* Simple mode UI
+* Only shows:
+
+  * Sensors
+  * Feed button
+  * Pump controls
+  * Alerts
+  * Growth status
+
+---
+
+UI STYLE:
+
+* Background: dark navy / deep blue gradient OR clean white with blue accents
+* Cards: rounded corners (12–16px)
+* Icons: minimal line icons
+* Font: Inter / Roboto
+* Use aquatic theme (fish farming / water system feel)
+* Smooth real-time update indicators
+
+---
+
+IMPORTANT DESIGN RULES:
+
+* No separate feeding page
+* Feeding must feel like part of the dashboard system
+* Must look like an IoT control center
+* Must prioritize live monitoring + quick actions
+* Must be mobile-first Android layout
+
+---
+
+OUTPUT:
+Provide a full UI mockup layout for:
+
+1. Admin Dashboard screen
+2. Farmer Dashboard screen
+3. Component layout breakdown
+4. Firebase binding notes per UI element
