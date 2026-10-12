@@ -277,8 +277,18 @@ public class SettingsActivity extends BaseNavActivity {
         float overflowLimit = overflowLimitSlider.getValue();
 
         Map<String, Object> updates = new HashMap<>();
-        updates.put("settings/feed_time", feedTimeInput.getText().toString());
-        updates.put("settings/feed_interval_hours", Integer.parseInt(feedIntervalInput.getText().toString()));
+        String feedTime = feedTimeInput.getText().toString().trim();
+        int feedIntervalHours = Integer.parseInt(feedIntervalInput.getText().toString());
+        String[] timeParts = feedTime.split(":");
+        int feedHour = Integer.parseInt(timeParts[0]);
+        int feedMinute = Integer.parseInt(timeParts[1]);
+        updates.put("settings/feed_time", feedTime);
+        updates.put("settings/feed_interval_hours", feedIntervalHours);
+        updates.put("ShrimpHub/feeder/autoFeedEnabled", midnightFeedSwitch.isChecked());
+        updates.put("ShrimpHub/feeder/feedTime", feedTime);
+        updates.put("ShrimpHub/feeder/feedIntervalHours", feedIntervalHours);
+        updates.put("ShrimpHub/feeder/feedHour1", feedHour);
+        updates.put("ShrimpHub/feeder/feedMinute1", feedMinute);
         updates.put("settings/sound_alert", soundSwitch.isChecked());
         updates.put("settings/vibrate", vibrateSwitch.isChecked());
         updates.put("settings/push_notifications", pushSwitch.isChecked());
@@ -350,9 +360,15 @@ public class SettingsActivity extends BaseNavActivity {
     }
 
     private boolean validateInputs() {
-        return !TextUtils.isEmpty(feedTimeInput.getText())
-                && !TextUtils.isEmpty(feedIntervalInput.getText())
-                && TextUtils.isDigitsOnly(feedIntervalInput.getText());
+        if (TextUtils.isEmpty(feedTimeInput.getText()) || !TextUtils.isDigitsOnly(feedIntervalInput.getText())) return false;
+        String[] parts = feedTimeInput.getText().toString().trim().split(":");
+        if (parts.length != 2) return false;
+        try {
+            int hour = Integer.parseInt(parts[0]);
+            int minute = Integer.parseInt(parts[1]);
+            int interval = Integer.parseInt(feedIntervalInput.getText().toString());
+            return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 && interval >= 1 && interval <= 24;
+        } catch (NumberFormatException ignored) { return false; }
     }
 
     private void setRangeSliderValues(RangeSlider slider, float rawMin, float rawMax) {

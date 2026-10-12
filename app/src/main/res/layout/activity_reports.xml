@@ -50,6 +50,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/reportPreviewText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Report Range"
@@ -115,7 +116,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="Includes temperature, salinity, turbidity, water level, alerts, and growth analytics."
+                android:text="Choose a date range to load actual sensor records."
                 android:textColor="@color/text_secondary"
                 android:textSize="15sp" />
         </LinearLayout>

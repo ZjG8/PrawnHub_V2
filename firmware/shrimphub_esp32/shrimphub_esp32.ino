@@ -260,6 +260,20 @@ void logHistoryRecord(const String &paramType, float value, const String &status
   trimOldHistoryEntry();
 }
 
+// Grouped records are consumed by the Growth screen. The existing /history log is retained
+// for backwards compatibility with reports that use its individual sensor entries.
+void logGrowthHistory(unsigned long unixTime, float temp, float tds, float turbidity, float waterLevel) {
+  if (!Firebase.ready()) return;
+
+  FirebaseJson json;
+  json.set("timestamp", String(unixTime));
+  json.set("temperature", temp);
+  json.set("tds", tds);
+  json.set("turbidity", turbidity);
+  json.set("waterLevel", waterLevel);
+  Firebase.RTDB.setJSON(&fbdo, "/ShrimpHub/history/" + String(unixTime), &json);
+}
+
 void releaseStepper() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
@@ -454,9 +468,12 @@ void checkScheduledFeeding() {
   }
 
   DateTime now = rtc.now();
-  bool due = isScheduleTime(now, feedHour1, feedMinute1)
-          || isScheduleTime(now, feedHour2, feedMinute2)
-          || isScheduleTime(now, feedHour3, feedMinute3);
+  int intervalHours = max(1, (int)(feedIntervalMillis / 3600000UL));
+  int baseMinute = feedHour1 * 60 + feedMinute1;
+  int currentMinute = now.hour() * 60 + now.minute();
+  int elapsedMinutes = currentMinute - baseMinute;
+  if (elapsedMinutes < 0) elapsedMinutes += 24 * 60;
+  bool due = elapsedMinutes % (intervalHours * 60) == 0;
   if (!due) {
     return;
   }
@@ -466,7 +483,19 @@ void checkScheduledFeeding() {
     return;
   }
 
+  // Keep the occurrence in Firebase too, so a restart cannot repeat the same feed minute.
+  if (Firebase.ready() && Firebase.RTDB.getString(&fbdo, "/ShrimpHub/feeder/lastScheduledOccurrence")
+      && fbdo.stringData() == key) {
+    lastScheduleKey = key;
+    return;
+  }
+
   lastScheduleKey = key;
+  if (Firebase.ready()) {
+    Firebase.RTDB.setString(&fbdo, "/ShrimpHub/feeder/lastScheduledOccurrence", key);
+    Firebase.RTDB.setString(&fbdo, "/ShrimpHub/feeder/nextScheduleRule",
+        String("every ") + String(intervalHours) + String(" hours from ") + String(feedHour1) + ":" + String(feedMinute1));
+  }
   requestFeed("scheduled");
 }
 
@@ -489,6 +518,8 @@ void pushSensorData() {
   Firebase.RTDB.setFloat(&fbdo, "/ShrimpHub/tds", tdsValue);
   Firebase.RTDB.setFloat(&fbdo, "/ShrimpHub/turbidity", turbidityValue);
   Firebase.RTDB.setFloat(&fbdo, "/ShrimpHub/waterLevel", waterLevel);
+  Firebase.RTDB.setBool(&fbdo, "/ShrimpHub/sensors_active", true);
+  Firebase.RTDB.setString(&fbdo, "/ShrimpHub/sensors_last_update", String(getUnixTime()));
 
   bool tempAlert = (temperature > max_temp || temperature < min_temp);
   bool salAlert = (tdsValue < min_sal || tdsValue > max_sal);
@@ -499,6 +530,7 @@ void pushSensorData() {
   logHistoryRecord("salinity", tdsValue, statusText(salAlert), ts);
   logHistoryRecord("turbidity", turbidityValue, statusText(turbidityAlert), ts);
   logHistoryRecord("water_level", waterLevel, statusText(waterAlert), ts);
+  logGrowthHistory(getUnixTime(), temperature, tdsValue, turbidityValue, waterLevel);
 
   Serial.println("[Firebase] Data pushed at: " + ts);
 }

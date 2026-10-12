@@ -17,6 +17,8 @@
     "temperature": 0.0,
     "tds": 0.0,
     "turbidity": 0.0,
+    "sensors_active": false,
+    "sensors_last_update": "",
     "waterLevel": 0.0,
     "control": {
       "pump1": false,
@@ -29,7 +31,13 @@
       "feedCount": 0,
       "lastFeedTime": "--",
       "feedAmount": 512,
-      "autoFeedEnabled": false
+      "autoFeedEnabled": false,
+      "feedTime": "08:00",
+      "feedIntervalHours": 6,
+      "feedHour1": 8,
+      "feedMinute1": 0,
+      "lastScheduledOccurrence": "",
+      "nextScheduleRule": "every 6 hours from 8:0"
     },
     "history": {
       "placeholder": {
@@ -52,9 +60,26 @@
   },
   "growth": {
     "start_date": "",
+    "status": "active",
+    "harvested_at": 0,
+    "last_harvest_readiness_notification_id": "",
+    "reset_cultures": {
+      "culture_id": {
+        "start_date": "",
+        "reset_at": 0,
+        "target_harvest_days": 75
+      }
+    },
     "days_of_culture": 0,
     "target_harvest_days": 75,
     "days_in_optimal_temp": 0,
-    "performance_score": 0.0
+    "performance_score": 0.0,
+    "completed_cultures": {
+      "culture_id": {
+        "start_date": "",
+        "harvested_at": 0,
+        "target_harvest_days": 75
+      }
+    }
   }
 }

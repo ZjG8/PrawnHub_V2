@@ -53,13 +53,16 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
     private void bindActions() {
         View reportsCard = findViewById(R.id.reportsCard);
         View settingsCard = findViewById(R.id.settingsCard);
-        View recentAlertsCard = findViewById(R.id.recentAlertsCard);
+        View historyCard = findViewById(R.id.historyCard);
+        View growthCard = findViewById(R.id.growthCard);
+        View manageUsersCard = findViewById(R.id.manageUsersCard);
         View logoutCard = findViewById(R.id.logoutCard);
 
         reportsCard.setOnClickListener(v -> startActivity(new Intent(this, ReportsActivity.class)));
         settingsCard.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
-        recentAlertsCard.setOnClickListener(v ->
-                Toast.makeText(this, "Recent alerts summary can be wired to Firebase alerts next.", Toast.LENGTH_SHORT).show());
+        historyCard.setOnClickListener(v -> startActivity(new Intent(this, HistoryActivity.class)));
+        growthCard.setOnClickListener(v -> startActivity(new Intent(this, GrowthActivity.class)));
+        manageUsersCard.setOnClickListener(v -> startActivity(new Intent(this, ManageUsersActivity.class)));
         logoutCard.setOnClickListener(v -> logout());
     }
 

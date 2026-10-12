@@ -64,22 +64,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Healthy"
+                    android:text="Waiting for sensor data"
                     android:textColor="@color/status_green"
                     android:textSize="22sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/alertBanner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/banner_alert"
-                android:text="Alert active"
-                android:textColor="@color/alert_red"
-                android:textStyle="bold"
-                android:visibility="gone" />
 
             <GridLayout
                 android:layout_width="match_parent"
@@ -91,7 +80,7 @@
                 <LinearLayout
                     android:id="@+id/tempCard"
                     android:layout_width="0dp"
-                    android:layout_height="128dp"
+                    android:layout_height="150dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/card_background"
                     android:orientation="vertical">
@@ -128,7 +117,7 @@
                 <LinearLayout
                     android:id="@+id/salCard"
                     android:layout_width="0dp"
-                    android:layout_height="128dp"
+                    android:layout_height="150dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/card_background"
                     android:orientation="vertical">
@@ -165,7 +154,7 @@
                 <LinearLayout
                     android:id="@+id/turbCard"
                     android:layout_width="0dp"
-                    android:layout_height="128dp"
+                    android:layout_height="150dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/card_background"
                     android:orientation="vertical">
@@ -202,7 +191,7 @@
                 <LinearLayout
                     android:id="@+id/waterCard"
                     android:layout_width="0dp"
-                    android:layout_height="128dp"
+                    android:layout_height="150dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/card_background"
                     android:orientation="vertical">
@@ -275,125 +264,72 @@
                     android:layout_marginTop="4dp"
                     android:text="Fresh Water"
                     android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/pump4Switch"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="4dp"
+                    android:text="Drain Pump"
+                    android:textColor="@color/text_primary" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/card_accent"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Feed Control"
+                    android:text="FEED CONTROL"
                     android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/feedStatusText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Feed Status"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
+                    android:layout_marginTop="10dp"
+                    android:text="Status: Ready"
+                    android:textColor="@color/text_primary"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/feedingStatusText"
+                    android:id="@+id/lastFeedText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Ready to Feed"
-                    android:textColor="@color/status_green"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="4dp"
+                    android:text="Last feed: --"
+                    android:textColor="@color/text_secondary" />
 
                 <TextView
-                    android:id="@+id/lastFeedTimeText"
+                    android:id="@+id/feedAmountText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Last Feed Time: --"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:layout_marginTop="4dp"
+                    android:text="Feed amount: --"
+                    android:textColor="@color/text_secondary" />
+
+                <TextView
+                    android:id="@+id/feedCountText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Feed count: --"
+                    android:textColor="@color/text_secondary" />
 
                 <Button
                     android:id="@+id/feedNowButton"
                     style="@style/ShrimpHubButton"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="12dp"
                     android:text="FEED NOW" />
-
-                <Button
-                    android:id="@+id/stopFeedButton"
-                    style="@style/ShrimpHubButton.Secondary"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:text="STOP FEEDING" />
             </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:text="Alerts"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/recentAlertsText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/card_background"
-                android:text="No water quality alerts&#10;Feeding: OFF"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:text="Growth Status"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/growthPredictionText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/card_success"
-                android:text="Waiting for Firebase sensor data"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:text="History Preview"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/historyPreviewText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/card_background"
-                android:text="No history logs yet"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
 
             <LinearLayout
                 android:id="@+id/adminSection"

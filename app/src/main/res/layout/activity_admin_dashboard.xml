@@ -101,7 +101,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/recentAlertsCard"
+            android:id="@+id/historyCard"
             android:layout_width="match_parent"
             android:layout_height="78dp"
             android:layout_marginTop="10dp"
@@ -115,7 +115,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Recent Alerts"
+                android:text="History"
                 android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:textStyle="bold" />
@@ -124,7 +124,65 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Review latest sensor warnings"
+                android:text="View recorded sensor data"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/growthCard"
+            android:layout_width="match_parent"
+            android:layout_height="78dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Growth"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Review culture conditions and trend"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/manageUsersCard"
+            android:layout_width="match_parent"
+            android:layout_height="78dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Manage User Accounts"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Manage administrator and farmer access"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
         </LinearLayout>

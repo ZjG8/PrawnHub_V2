@@ -1,297 +1,85 @@
 package com.example.prawnhub_v2;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/** Configured-duration culture tracking; sensor readings are never presented as measured growth. */
 public class GrowthActivity extends BaseNavActivity {
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-    private DatabaseReference database;
-    private TextView daysText;
-    private TextView targetText;
-    private TextView scoreText;
-    private TextView statusBadge;
-    private TextView recommendationsText;
-    private ProgressBar healthProgress;
-    private LineChart growthChart;
-    private int targetDays = 75;
-    private int optimalDays = 0;
+    private final SimpleDateFormat storedDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private final SimpleDateFormat displayDate = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
+    private DatabaseReference root;
+    private TextView startDateText, cultureDaysText, harvestText, scoreText, daysText, stageText, statusText, analysisText, tempText, tdsText, turbText, trendEmpty;
+    private CircularProgressIndicator progress;
+    private LineChart chart;
+    private Button setStartDateButton, harvestButton, resetCultureButton;
+    private String startDate="", cultureStatus="active", harvestedAt="", readinessNotificationId="";
+    private long startMillis;
+    private int cultureDays, targetDays;
+    private float minTemp=28, maxTemp=32, minTds=15, maxTds=25, minTurb=0, maxTurb=45, overflowLimit=5;
+    private Float liveTemp, liveTds, liveTurb, liveWater;
+    private boolean sensorsActive;
+    private long sensorsLastUpdate;
+    private boolean resetInProgress;
+    private List<Sample> samples=Collections.emptyList();
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_growth);
-        setupBottomNav();
-
-        database = FirebaseDatabase.getInstance().getReference();
-        daysText = findViewById(R.id.daysText);
-        targetText = findViewById(R.id.targetText);
-        scoreText = findViewById(R.id.scoreText);
-        statusBadge = findViewById(R.id.statusBadge);
-        recommendationsText = findViewById(R.id.recommendationsText);
-        healthProgress = findViewById(R.id.healthProgress);
-        growthChart = findViewById(R.id.growthChart);
-        Button setStartDateButton = findViewById(R.id.setStartDateButton);
-        setStartDateButton.setOnClickListener(view -> showDatePicker());
-
-        setupChart();
-        listenToSettings();
-        listenToGrowth();
-        listenToSensorHealth();
-        listenToTrend();
+    @Override protected void onCreate(Bundle state) {
+        super.onCreate(state); setContentView(R.layout.activity_growth); setupBottomNav(); root=FirebaseDatabase.getInstance().getReference(); bind();
+        findViewById(R.id.backButton).setOnClickListener(v->finish()); setStartDateButton.setOnClickListener(v->selectStartDate()); harvestButton.setOnClickListener(v->confirmHarvest()); resetCultureButton.setOnClickListener(v->confirmReset());
+        listenSettings(); listenGrowth(); listenSensors(); listenHistory();
     }
-
-    private void setupChart() {
-        growthChart.setNoDataText("Waiting for Firebase growth trend data.");
-        Description description = new Description();
-        description.setText("Weekly growth health");
-        growthChart.setDescription(description);
+    private void bind() {
+        startDateText=t(R.id.cultureStartDateText); cultureDaysText=t(R.id.cultureDaysInfoText); harvestText=t(R.id.targetText); scoreText=t(R.id.scoreText); daysText=t(R.id.daysText); stageText=t(R.id.growthStageText); statusText=t(R.id.statusBadge); analysisText=t(R.id.recommendationsText); tempText=t(R.id.temperatureConditionText); tdsText=t(R.id.tdsConditionText); turbText=t(R.id.turbidityConditionText); trendEmpty=t(R.id.growthTrendEmptyText);
+        progress=findViewById(R.id.healthProgress); chart=findViewById(R.id.growthChart); setStartDateButton=findViewById(R.id.setStartDateButton); harvestButton=findViewById(R.id.harvestButton); resetCultureButton=findViewById(R.id.resetCultureButton);
+        Description d=new Description(); d.setText("Pond conditions based on calibrated sensor readings (0-100)"); chart.setDescription(d);
     }
-
-    private void listenToSettings() {
-        database.child("settings").child("target_harvest_days").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                targetDays = getInt(snapshot, 75);
-                targetText.setText("Harvest readiness is calculated automatically from growth and water quality.");
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(GrowthActivity.this, "Settings listener failed.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void listenToGrowth() {
-        database.child("growth").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String startDate = snapshot.child("start_date").getValue(String.class);
-                optimalDays = getInt(snapshot.child("days_in_optimal_temp"), 0);
-                int cultureDays = calculateDays(startDate);
-                database.child("growth").child("days_of_culture").setValue(cultureDays);
-                renderGrowth(cultureDays);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(GrowthActivity.this, "Growth listener failed.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private int calculateDays(String startDate) {
-        if (startDate == null || startDate.isEmpty()) {
-            return 0;
-        }
-        try {
-            Date start = dateFormat.parse(startDate);
-            if (start == null) {
-                return 0;
-            }
-            long diff = new Date().getTime() - start.getTime();
-            return Math.max(0, (int) TimeUnit.MILLISECONDS.toDays(diff));
-        } catch (ParseException error) {
-            return 0;
-        }
-    }
-
-    private void renderGrowth(int cultureDays) {
-        daysText.setText(cultureDays + " days");
-        targetText.setText("Target harvest: " + targetDays + " days");
-        targetText.setText("Harvest readiness is calculated automatically from growth and water quality.");
-
-        float score = 0f;
-        if (cultureDays > 0) {
-            score = (((float) optimalDays / cultureDays) * 0.6f + ((float) targetDays / cultureDays) * 0.4f) * 100f;
-            score = Math.min(100f, Math.max(0f, score));
-        }
-        database.child("growth").child("performance_score").setValue(score);
-        renderHealth(score);
-    }
-
-    private void listenToSensorHealth() {
-        database.child("aquarium").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot aquarium) {
-                float temp = getFloat(aquarium, "temp_val", 30f);
-                float salinity = getFloat(aquarium, "tds_val", 20f);
-                float turbidity = getFloat(aquarium, "turb_val", 0f);
-                float oxygen = getFloat(aquarium, "oxygen_val", getFloat(aquarium, "do_val", 6f));
-                float ph = getFloat(aquarium, "ph_val", 7.5f);
-                renderSensorHealth(temp, salinity, turbidity, oxygen, ph);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(GrowthActivity.this, "Sensor listener failed.", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        database.child("ShrimpHub").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot shrimpHub) {
-                if (!shrimpHub.exists()) {
-                    return;
-                }
-                float temp = getFloat(shrimpHub, "temperature", 30f);
-                float salinity = getFloat(shrimpHub, "tds", 20f);
-                float turbidity = getFloat(shrimpHub, "turbidity", 0f);
-                renderSensorHealth(temp, salinity, turbidity, 6f, 7.5f);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(GrowthActivity.this, "ShrimpHub sensor listener failed.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void renderSensorHealth(float temp, float salinity, float turbidity, float oxygen, float ph) {
-        int issues = 0;
-        if (temp < 28f || temp > 32f) issues++;
-        if (salinity < 15f || salinity > 25f) issues++;
-        if (turbidity > 45f) issues++;
-        if (oxygen < 5f) issues++;
-        if (ph < 6.5f || ph > 8.5f) issues++;
-        float score = Math.max(0f, 100f - (issues * 18f));
-        database.child("growth").child("water_quality_score").setValue(score);
-        renderHealth(score);
-        recommendationsText.setText(buildRecommendations(temp, salinity, turbidity, oxygen, ph));
-    }
-
-    private void listenToTrend() {
-        database.child("growth_trend").limitToLast(7).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<Entry> entries = new ArrayList<>();
-                int index = 0;
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    Float value = getNullableFloat(child.child("score"));
-                    if (value == null) {
-                        value = getNullableFloat(child);
-                    }
-                    if (value != null) {
-                        entries.add(new Entry(index++, value));
-                    }
-                }
-                LineDataSet dataSet = new LineDataSet(entries, "Growth health");
-                dataSet.setColor(Color.rgb(0, 108, 103));
-                dataSet.setCircleColor(Color.rgb(242, 140, 111));
-                dataSet.setLineWidth(2f);
-                dataSet.setCircleRadius(4f);
-                growthChart.setData(new LineData(dataSet));
-                growthChart.invalidate();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(GrowthActivity.this, "Trend listener failed.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void renderHealth(float score) {
-        healthProgress.setProgress(Math.round(score));
-        scoreText.setText(String.format(Locale.US, "%.0f%% health", score));
-
-        if (score >= 80f) {
-            statusBadge.setText("On Track - Excellent conditions!");
-            statusBadge.setBackgroundResource(R.drawable.badge_green);
-        } else if (score >= 60f) {
-            statusBadge.setText("Good - Monitor water closely.");
-            statusBadge.setBackgroundResource(R.drawable.badge_yellow);
-        } else {
-            statusBadge.setText("Needs Attention - Check parameters now.");
-            statusBadge.setBackgroundResource(R.drawable.badge_red);
-        }
-    }
-
-    private String buildRecommendations(float temp, float salinity, float turbidity, float oxygen, float ph) {
-        StringBuilder builder = new StringBuilder();
-        if (oxygen < 5f) builder.append("Maintain oxygen level. ");
-        if (salinity < 15f || salinity > 25f) builder.append("Reduce salinity variation. ");
-        if (turbidity > 45f) builder.append("Monitor turbidity and filtration. ");
-        if (temp < 28f || temp > 32f) builder.append("Keep temperature within target range. ");
-        if (ph < 6.5f || ph > 8.5f) builder.append("Correct pH balance. ");
-        return builder.length() == 0 ? "Maintain oxygen level, stable salinity, and clear water conditions." : builder.toString().trim();
-    }
-
-    private float getFloat(DataSnapshot snapshot, String key, float fallback) {
-        Float value = getNullableFloat(snapshot.child(key));
-        return value == null ? fallback : value;
-    }
-
-    private Float getNullableFloat(DataSnapshot snapshot) {
-        Object value = snapshot.getValue();
-        if (value instanceof Number) {
-            return ((Number) value).floatValue();
-        }
-        if (value instanceof String) {
-            try {
-                return Float.parseFloat((String) value);
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
-    }
-
-    private int getInt(DataSnapshot snapshot, int fallback) {
-        Object value = snapshot.getValue();
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
-        }
-        if (value instanceof String) {
-            try {
-                return Integer.parseInt((String) value);
-            } catch (NumberFormatException ignored) {
-                return fallback;
-            }
-        }
-        return fallback;
-    }
-
-    private void showDatePicker() {
-        Calendar now = Calendar.getInstance();
-        DatePickerDialog dialog = new DatePickerDialog(
-                this,
-                (view, year, month, dayOfMonth) -> {
-                    Calendar selected = Calendar.getInstance();
-                    selected.set(year, month, dayOfMonth);
-                    database.child("growth").child("start_date").setValue(dateFormat.format(selected.getTime()));
-                },
-                now.get(Calendar.YEAR),
-                now.get(Calendar.MONTH),
-                now.get(Calendar.DAY_OF_MONTH)
-        );
-        dialog.show();
-    }
+    private TextView t(int id){return findViewById(id);}
+    private void listenSettings(){root.child("settings").addValueEventListener(new ValueEventListener(){@Override public void onDataChange(@NonNull DataSnapshot s){minTemp=num(s,"min_temp",28);maxTemp=num(s,"max_temp",32);minTds=num(s,"min_sal",15);maxTds=num(s,"max_sal",25);minTurb=num(s,"min_turb",0);maxTurb=num(s,"max_turb",45);overflowLimit=num(s,"overflow_limit",5);targetDays=Math.max(0,Math.round(num(s,"target_harvest_days",0)));render();}@Override public void onCancelled(@NonNull DatabaseError e){render();}});}
+    private void listenGrowth(){root.child("growth").addValueEventListener(new ValueEventListener(){@Override public void onDataChange(@NonNull DataSnapshot s){startDate=str(s,"start_date");cultureStatus=str(s,"status");if(cultureStatus.isEmpty())cultureStatus="active";harvestedAt=str(s,"harvested_at");readinessNotificationId=str(s,"last_harvest_readiness_notification_id");startMillis=parseStoredDate(startDate);cultureDays=startMillis==0?0:(int)Math.max(0,TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()-startMillis));render();}@Override public void onCancelled(@NonNull DatabaseError e){startDate="";startMillis=0;render();}});}
+    private void listenSensors(){root.child("ShrimpHub").addValueEventListener(new ValueEventListener(){@Override public void onDataChange(@NonNull DataSnapshot s){liveTemp=value(s,"temperature");liveTds=value(s,"tds");liveTurb=value(s,"turbidity");liveWater=value(s,"waterLevel");sensorsActive=Boolean.TRUE.equals(s.child("sensors_active").getValue(Boolean.class));sensorsLastUpdate=parseTimestamp(s.child("sensors_last_update").getValue());if(sensorsActive&&sensorsLastUpdate>0&&System.currentTimeMillis()-sensorsLastUpdate>120000L)sensorsActive=false;if(!sensorsActive&&sensorsLastUpdate==0&&nonZero(liveTemp,liveTds,liveTurb,liveWater))sensorsActive=true;render();}@Override public void onCancelled(@NonNull DatabaseError e){sensorsActive=false;render();}});}
+    private void listenHistory(){root.child("ShrimpHub/history").addValueEventListener(new ValueEventListener(){@Override public void onDataChange(@NonNull DataSnapshot rootSnapshot){Map<Long,SampleBuilder> grouped=new HashMap<>();for(DataSnapshot row:rootSnapshot.getChildren())addHistory(grouped,row);List<Sample> valid=new ArrayList<>();for(Map.Entry<Long,SampleBuilder> e:grouped.entrySet())if(e.getValue().complete())valid.add(e.getValue().build(e.getKey()));valid.sort(Comparator.comparingLong(v->v.time));samples=valid;render();}@Override public void onCancelled(@NonNull DatabaseError e){samples=Collections.emptyList();render();}});}
+    private void addHistory(Map<Long,SampleBuilder> grouped,DataSnapshot row){long time=parseTimestamp(row.child("timestamp").getValue());if(time==0)return;SampleBuilder b=grouped.containsKey(time)?grouped.get(time):new SampleBuilder();Float temp=value(row,"temperature"),tds=value(row,"tds"),turb=value(row,"turbidity"),water=value(row,"waterLevel");if(temp!=null)b.temp=temp;if(tds!=null)b.tds=tds;if(turb!=null)b.turb=turb;if(water!=null)b.water=water;Float recorded=value(row,"rec_val");String type=str(row,"param_type");if(recorded!=null){if("temp".equals(type)||"temperature".equals(type))b.temp=recorded;if("salinity".equals(type)||"tds".equals(type))b.tds=recorded;if("turbidity".equals(type))b.turb=recorded;if("water_level".equals(type))b.water=recorded;}grouped.put(time,b);}
+    private void render(){renderSensors();boolean started=startMillis>0,harvested="harvested".equalsIgnoreCase(cultureStatus);if(!started){renderNotStarted();return;}startDateText.setText("Culture Start Date: "+displayDate.format(new Date(startMillis)));cultureDaysText.setText("Culture Days: "+cultureDays);if(harvested){renderHarvested();return;}HarvestPolicy.Decision decision=HarvestPolicy.evaluate(true,cultureDays,targetDays);if(!decision.hasConfiguredTarget){renderUnconfigured();return;}Calendar harvest=Calendar.getInstance();harvest.setTimeInMillis(startMillis);harvest.add(Calendar.DAY_OF_YEAR,targetDays);progress.setProgress(decision.progressPercent);scoreText.setText("Growth Progress: "+decision.progressPercent+"%");daysText.setText("Configured target: "+targetDays+" culture days");harvestText.setText("Harvest Date: "+displayDate.format(harvest.getTime()));stageText.setText("Growth Stage: Configured duration tracking");statusText.setText(decision.readyToHarvest?"Condition: Ready for harvest review":"Condition: Culture in progress");analysisText.setText("Progress and readiness use the configured culture duration. Sensor readings are shown separately and are not treated as measured prawn growth.");harvestButton.setEnabled(decision.readyToHarvest);resetCultureButton.setEnabled(!resetInProgress);setStartDateButton.setText("Set Start Date");showTrend();if(decision.readyToHarvest)notifyOnce(startDate+":"+targetDays);}
+    private void renderSensors(){PondConditionEvaluator.Result conditions=PondConditionEvaluator.evaluate(liveTemp,liveTds,liveTurb,liveWater,minTemp,maxTemp,minTds,maxTds,minTurb,maxTurb,overflowLimit);tempText.setText(live("Temperature",liveTemp,"C",conditions.temperature));tdsText.setText(live("Salinity/TDS",liveTds,"ppm",conditions.tds));turbText.setText(live("Turbidity",liveTurb,"NTU",conditions.turbidity));}
+    private String live(String name,Float v,String unit,PondConditionEvaluator.Status status){if(v==null)return name+": 0 "+unit+" - Normal (initializing)";if(!sensorsActive)return String.format(Locale.US,"%s: %.1f %s - Unavailable",name,v,unit);return String.format(Locale.US,"%s: %.1f %s - %s",name,v,unit,status==PondConditionEvaluator.Status.NORMAL?"Normal":status==PondConditionEvaluator.Status.CRITICAL?"Critical":"Warning");}
+    private void renderNotStarted(){progress.setProgress(0);startDateText.setText("Culture Start Date: Not Set");cultureDaysText.setText("Culture Days: --");scoreText.setText("Not Started");daysText.setText("Growth Progress: Not Started");harvestText.setText("Harvest Date: Unavailable");stageText.setText("Growth Stage: Not Started");statusText.setText("Harvest Readiness: Not Available");analysisText.setText("Set a new culture start date to begin growth tracking.");harvestButton.setEnabled(false);setStartDateButton.setText("Set Start Date");resetCultureButton.setEnabled(!resetInProgress);showEmpty("Growth trend will appear after the culture start date is set and sensor history is available.");}
+    private void renderUnconfigured(){progress.setProgress(0);scoreText.setText("Growth Progress: Unavailable");daysText.setText("Configured harvest duration is unavailable");harvestText.setText("Harvest Date: Unavailable");stageText.setText("Growth Stage: Harvest criteria not configured");statusText.setText("Condition: Harvest criteria have not been configured");analysisText.setText("Set a valid target_harvest_days value in settings before using harvest tracking.");harvestButton.setEnabled(false);resetCultureButton.setEnabled(!resetInProgress);showTrend();}
+    private void renderHarvested(){progress.setProgress(100);scoreText.setText("Culture Harvested");daysText.setText("Growth Progress: Completed");harvestText.setText("Harvest Date: "+readableHarvestDate());stageText.setText("Growth Stage: Harvested");statusText.setText("Condition: Culture Harvested");analysisText.setText("This culture is complete. Start a new culture when a new stocking cycle begins.");harvestButton.setEnabled(false);setStartDateButton.setText("Start New Culture");resetCultureButton.setEnabled(false);showEmpty("This culture has been harvested. Its recorded sensor history remains available for reports.");}
+    private void showTrend(){List<Sample> after=new ArrayList<>();for(Sample s:samples)if(s.time>=startMillis)after.add(s);if(after.size()<2){showEmpty("More valid sensor data is required after the culture start date to display the Growth Trend.");return;}chart.setVisibility(View.VISIBLE);trendEmpty.setVisibility(View.GONE);List<Entry> points=new ArrayList<>();for(Sample s:after){PondConditionEvaluator.Result conditions=PondConditionEvaluator.evaluate(s.temp,s.tds,s.turb,s.water,minTemp,maxTemp,minTds,maxTds,minTurb,maxTurb,overflowLimit);if(conditions.settingsValid&&conditions.availableCount==4)points.add(new Entry(s.time/1000f,conditions.score));}if(points.size()<2){showEmpty("Growth Trend needs complete calibrated sensor history.");return;}LineDataSet set=new LineDataSet(points,"Growth conditions (0-100)");set.setColor(android.graphics.Color.rgb(63,140,133));set.setCircleColor(android.graphics.Color.rgb(242,140,111));set.setLineWidth(2f);chart.setData(new LineData(set));chart.invalidate();}
+    private void showEmpty(String message){chart.clear();chart.setVisibility(View.GONE);trendEmpty.setText(message);trendEmpty.setVisibility(View.VISIBLE);}
+    private void notifyOnce(String eventId){if(eventId.equals(readinessNotificationId))return;root.child("growth/last_harvest_readiness_notification_id").setValue(eventId).addOnSuccessListener(v->NotificationHelper.showAlert(this,"Harvesting time!","Your prawns may be ready for harvest. Please review the pond conditions before proceeding.",3001));}
+    private void confirmHarvest(){if(!harvestButton.isEnabled())return;new AlertDialog.Builder(this).setTitle("Mark culture as harvested?").setMessage("This records the current culture as harvested. It does not control pumps, relays, or the feeder.").setNegativeButton("Cancel",null).setPositiveButton("Harvest",(d,w)->saveHarvest()).show();}
+    private void saveHarvest(){harvestButton.setEnabled(false);long now=System.currentTimeMillis();String id=startDate+"_"+now;Map<String,Object> updates=new HashMap<>();updates.put("growth/status","harvested");updates.put("growth/harvested_at",now);updates.put("growth/completed_cultures/"+id+"/start_date",startDate);updates.put("growth/completed_cultures/"+id+"/harvested_at",now);updates.put("growth/completed_cultures/"+id+"/target_harvest_days",targetDays);root.updateChildren(updates).addOnSuccessListener(v->android.widget.Toast.makeText(this,"Culture marked as harvested.",android.widget.Toast.LENGTH_SHORT).show()).addOnFailureListener(e->{android.widget.Toast.makeText(this,"Harvest could not be saved. Please retry.",android.widget.Toast.LENGTH_LONG).show();render();});}
+    private void confirmReset(){if(resetInProgress)return;if("harvested".equalsIgnoreCase(cultureStatus)){android.widget.Toast.makeText(this,"This culture is already harvested. Use Start New Culture instead.",android.widget.Toast.LENGTH_LONG).show();return;}if(startMillis==0){android.widget.Toast.makeText(this,"No active culture to reset.",android.widget.Toast.LENGTH_SHORT).show();return;}new AlertDialog.Builder(this).setTitle("Reset Culture?").setMessage("Are you sure you want to reset the current culture? The active growth data and harvest prediction will be cleared, and you will need to set a new culture start date.").setNegativeButton("Cancel",null).setPositiveButton("Reset Culture",(dialog,which)->resetCulture()).show();}
+    private void resetCulture(){resetInProgress=true;resetCultureButton.setEnabled(false);long now=System.currentTimeMillis();String id=startDate+"_reset_"+now;Map<String,Object> updates=new HashMap<>();updates.put("growth/reset_cultures/"+id+"/start_date",startDate);updates.put("growth/reset_cultures/"+id+"/reset_at",now);updates.put("growth/reset_cultures/"+id+"/target_harvest_days",targetDays);updates.put("growth/start_date","");updates.put("growth/status","inactive");updates.put("growth/harvested_at",null);updates.put("growth/last_harvest_readiness_notification_id",null);root.updateChildren(updates).addOnSuccessListener(v->{resetInProgress=false;android.widget.Toast.makeText(this,"Culture reset. Set a new start date to continue.",android.widget.Toast.LENGTH_SHORT).show();}).addOnFailureListener(e->{resetInProgress=false;resetCultureButton.setEnabled(true);android.widget.Toast.makeText(this,"Culture reset failed. Please retry.",android.widget.Toast.LENGTH_LONG).show();});}
+    private void selectStartDate(){Calendar now=Calendar.getInstance();new DatePickerDialog(this,(v,y,m,d)->{Calendar chosen=Calendar.getInstance();chosen.clear();chosen.set(y,m,d);if(chosen.after(today())){new AlertDialog.Builder(this).setMessage("The culture start date cannot be in the future.").setPositiveButton("OK",null).show();return;}String candidate=storedDate.format(chosen.getTime());String action="harvested".equalsIgnoreCase(cultureStatus)?"Start a new culture":"Save culture start date";new AlertDialog.Builder(this).setTitle(action).setMessage(action+" as "+displayDate.format(chosen.getTime())+"?").setNegativeButton("Cancel",null).setPositiveButton("Save",(dialog,which)->startCulture(candidate)).show();},now.get(Calendar.YEAR),now.get(Calendar.MONTH),now.get(Calendar.DAY_OF_MONTH)).show();}
+    private void startCulture(String date){Map<String,Object> updates=new HashMap<>();updates.put("growth/start_date",date);updates.put("growth/status","active");updates.put("growth/harvested_at",null);updates.put("growth/last_harvest_readiness_notification_id",null);root.updateChildren(updates).addOnFailureListener(e->android.widget.Toast.makeText(this,"Culture start date could not be saved.",android.widget.Toast.LENGTH_LONG).show());}
+    private String readableHarvestDate(){long time=parseTimestamp(harvestedAt);return time==0?"Recorded":displayDate.format(new Date(time));}
+    private Calendar today(){Calendar c=Calendar.getInstance();c.set(Calendar.HOUR_OF_DAY,0);c.set(Calendar.MINUTE,0);c.set(Calendar.SECOND,0);c.set(Calendar.MILLISECOND,0);return c;}
+    private float num(DataSnapshot s,String key,float fallback){Float v=value(s,key);return v==null?fallback:v;}
+    private Float value(DataSnapshot s,String key){Object v=s.child(key).getValue();if(v instanceof Number)return ((Number)v).floatValue();try{return v==null?null:Float.parseFloat(String.valueOf(v));}catch(NumberFormatException e){return null;}}
+    private String str(DataSnapshot s,String key){Object v=s.child(key).getValue();return v==null?"":String.valueOf(v);}
+    private boolean nonZero(Float... values){for(Float v:values)if(v!=null&&v!=0f)return true;return false;}
+    private long parseStoredDate(String value){try{Date d=storedDate.parse(value);return d==null?0:d.getTime();}catch(Exception e){return 0;}}
+    private long parseTimestamp(Object value){if(value instanceof Number){long raw=((Number)value).longValue();return raw<100000000000L?raw*1000:raw;}if(value==null)return 0;try{return parseTimestamp(Long.parseLong(String.valueOf(value)));}catch(NumberFormatException e){return 0;}}
+    private static final class Sample{final long time;final float temp,tds,turb,water;Sample(long time,float temp,float tds,float turb,float water){this.time=time;this.temp=temp;this.tds=tds;this.turb=turb;this.water=water;}}
+    private static final class SampleBuilder{Float temp,tds,turb,water;boolean complete(){return temp!=null&&tds!=null&&turb!=null&&water!=null;}Sample build(long time){return new Sample(time,temp,tds,turb,water);}}
 }
