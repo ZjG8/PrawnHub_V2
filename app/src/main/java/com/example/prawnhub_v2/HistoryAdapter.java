@@ -69,7 +69,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         if ("temp".equals(parameter) || "temperature".equals(parameter)) return " C";
         if ("salinity".equals(parameter) || "tds".equals(parameter)) return " ppt";
         if ("turbidity".equals(parameter)) return " NTU";
-        if ("water_level".equals(parameter) || "waterLevel".equals(parameter)) return " ft";
+        if ("water_level".equals(parameter) || "waterLevel".equals(parameter)) return " cm";
         return "";
     }
 

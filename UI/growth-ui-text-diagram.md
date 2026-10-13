@@ -1,87 +1,98 @@
-# PrawnHub Growth Screen - Text UI Diagram
+# PrawnHub Growth Screen — Text UI Diagram
 
 Screen: `GrowthActivity` / `activity_growth.xml`
 
 ```text
 +--------------------------------------------------+
-| [<- Back]                                        |
+| [← Back]                                         |
 +--------------------------------------------------+
 | GROWTH PREDICTION                                |
 | +----------------------------------------------+ |
-| |             [ circular progress ]            | |
-| |                                                | |
-| | Predicted growth rate: -- / 1.00x             | |
-| | Culture days: N  /  Growth progress: N%       | |
+| |              [circular progress]             | |
+| | Growth Progress: N% / Unavailable / Started  | |
+| | Configured target: N culture days             | |
 | +----------------------------------------------+ |
 +--------------------------------------------------+
 | CULTURE INFORMATION                              |
 | +----------------------------------------------+ |
-| | Estimated harvest: unavailable / culture day | |
+| | Culture Start Date: date / Not Set            | |
+| | Harvest Date: date / Unavailable              | |
+| | Culture Days: N / --                          | |
+| | Growth Stage: active / harvested / not started| |
 | +----------------------------------------------+ |
-| +----------------------------------------------+ |
-| | Growth stage: Not started / Growing / ...    | |
-| +----------------------------------------------+ |
-| [ Condition: Waiting / Good / Monitor / Critical]|
+| [Condition: In progress / Ready / Unavailable]   |
 +--------------------------------------------------+
 | SENSOR CONDITIONS                                |
 | +----------------------------------------------+ |
-| | Temperature: live value + condition          | |
-| +----------------------------------------------+ |
-| | Salinity/TDS: live value + condition         | |
-| +----------------------------------------------+ |
-| | Turbidity: live value + condition            | |
+| | Temperature: NN.N C — Normal/Warning/...     | |
+| | Salinity/TDS: NN.N ppm — Normal/Warning/...  | |
+| | Turbidity: NN.N NTU — Normal/Warning/...     | |
 | +----------------------------------------------+ |
 +--------------------------------------------------+
 | GROWTH ANALYSIS                                  |
 | +----------------------------------------------+ |
-| | Recommendation or data-availability message  | |
+| | Duration-based readiness explanation or      | |
+| | configuration/data-availability guidance     | |
 | +----------------------------------------------+ |
 +--------------------------------------------------+
 | GROWTH TREND                                     |
 | +----------------------------------------------+ |
-| | Line chart of valid sensor-condition history | |
-| | or an empty-state message                     | |
+| | Condition-score line chart (0–100), or       | |
+| | an explanation of why it is unavailable      | |
 | +----------------------------------------------+ |
-| [Set Start Date]                                 |
+| [ Set Start Date / Start New Culture ]           |
+| [ Harvest ] (enabled only when ready)            |
+| [ Reset Culture ]                                |
 +--------------------------------------------------+
 | Dashboard | History | Growth | Settings          |
 +--------------------------------------------------+
 ```
 
-## State Rules
+## State and interaction flow
 
 ```text
-No saved culture start date
+No saved start date
     |
-    +-> Prediction: not started
-    +-> Culture information: not started / unavailable
-    +-> Analysis: prompt to save the actual start date
-    +-> Trend: empty; no fabricated chart points
-    `-> [Set Start Date] opens a date picker and saves /growth/start_date
+    +-> Show “Not Started” / unavailable states
+    +-> Keep Harvest disabled
+    +-> Show an empty Growth Trend explanation
+    `-> [Set Start Date] validates a non-future date and saves /growth/start_date
 
-Saved valid culture start date
+Active culture with configured target_harvest_days
     |
-    +-> Culture days = current date - saved start date
-    +-> Read live values from /ShrimpHub
-    +-> Read history from /ShrimpHub/history
-    +-> Ignore history records before the saved start date
+    +-> Culture days = today - saved start date
+    +-> Progress = culture days / configured target duration
+    +-> Before target: “Culture in progress”; Harvest disabled
+    `-> At or after target: “Ready for harvest review”; Harvest enabled
+
+[Harvest]
     |
-    +-> No complete post-start records
-    |   `-> Explain that more data is required; do not create an estimate
+    +-> Ask for confirmation
+    +-> Save harvested status and an immutable completed-culture record
+    `-> Show harvested state; [Set Start Date] becomes [Start New Culture]
+
+[Reset Culture]
     |
-    `-> Complete post-start records
-        +-> Calculate condition score from configured ranges
-        +-> Render progress, stage, analysis, and chart
-        `-> Label output as an estimate, not measured biomass
+    +-> Ask for confirmation
+    +-> Archive the reset event
+    `-> Clear only the active growth cycle; sensor history is retained
+
+Sensor and history updates
+    |
+    +-> Evaluate live temperature, TDS, turbidity, and water level against settings
+    +-> Build chronological condition scores from complete post-start records
+    `-> Never represent sensor readings as measured prawn biomass or growth
 ```
 
-## Data Inputs
+## Data inputs
 
 | Firebase path | Use on screen |
 |---|---|
-| `/growth/start_date` | Enables culture-day counting and growth analysis |
-| `/ShrimpHub/temperature` | Live temperature condition |
-| `/ShrimpHub/tds` | Live TDS/salinity condition |
-| `/ShrimpHub/turbidity` | Live turbidity condition |
-| `/ShrimpHub/history` | Trend and post-start condition analysis |
-| `/settings` | Temperature, TDS/salinity, and turbidity target ranges |
+| `/growth/start_date` | Active culture start date |
+| `/growth/status` and `/growth/harvested_at` | Harvested/active state and displayed harvest date |
+| `/growth/completed_cultures` | Immutable completed-culture history |
+| `/growth/reset_cultures` | Reset-event archive |
+| `/settings/target_harvest_days` | Configured culture duration and readiness calculation |
+| `/settings` sensor thresholds | Sensor-condition evaluation and trend score |
+| `/ShrimpHub` | Live temperature, TDS, turbidity, water level, and sensor activity |
+| `/ShrimpHub/history` | Complete historical samples used for the condition trend |

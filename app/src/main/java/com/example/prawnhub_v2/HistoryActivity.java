@@ -50,8 +50,8 @@ public class HistoryActivity extends BaseNavActivity {
     private final List<HistoryRecord> allRecords = new ArrayList<>();
     private final Calendar startDate = Calendar.getInstance();
     private final Calendar endDate = Calendar.getInstance();
-    private final SimpleDateFormat dateButtonFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
-    private final SimpleDateFormat verificationFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+    private final SimpleDateFormat dateButtonFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm a", Locale.US);
+    private final SimpleDateFormat verificationFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a", Locale.US);
     private HistoryAdapter adapter;
     private RecyclerView recycler;
     private String selectedParameter = "all";
@@ -71,6 +71,9 @@ public class HistoryActivity extends BaseNavActivity {
     private TextView emptyStateText;
     private Button startDateButton;
     private Button endDateButton;
+    private Query historyQuery;
+    private ValueEventListener historyListener;
+    private boolean dateRangeFilterEnabled = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +103,8 @@ public class HistoryActivity extends BaseNavActivity {
         verificationTurbidityText = findViewById(R.id.verificationTurbidityText);
         verificationWaterLevelText = findViewById(R.id.verificationWaterLevelText);
         emptyStateText = findViewById(R.id.historyEmptyText);
+        emptyStateText.setVisibility(View.VISIBLE);
+        emptyStateText.setText("Loading history…");
         configureChart(temperatureChart);
         configureChart(salinityChart);
         configureChart(turbidityChart);
@@ -119,7 +124,18 @@ public class HistoryActivity extends BaseNavActivity {
         startDateButton.setOnClickListener(view -> showDateTimePicker(startDate, true));
         endDateButton.setOnClickListener(view -> showDateTimePicker(endDate, false));
         Button applyButton = findViewById(R.id.applyDateFilterButton);
-        applyButton.setOnClickListener(view -> renderData());
+        applyButton.setOnClickListener(view -> {
+            if (startDate.after(endDate)) {
+                Toast.makeText(this, "Start date must not be later than end date.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dateRangeFilterEnabled = true;
+            renderData();
+        });
+        findViewById(R.id.showAllHistoryButton).setOnClickListener(view -> {
+            dateRangeFilterEnabled = false;
+            renderData();
+        });
     }
 
     private void setupSensorFilter() {
@@ -142,11 +158,11 @@ public class HistoryActivity extends BaseNavActivity {
 
     private void listenToHistory() {
         Log.d(HISTORY_TAG, "History path used: " + HISTORY_PATH);
-        Query query = FirebaseDatabase.getInstance()
+        historyQuery = FirebaseDatabase.getInstance()
                 .getReference("ShrimpHub")
                 .child("history")
                 .orderByChild("timestamp");
-        query.addValueEventListener(new ValueEventListener() {
+        historyListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Log.d(HISTORY_TAG, "Firebase listener status: onDataChange");
@@ -201,9 +217,12 @@ public class HistoryActivity extends BaseNavActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.d(HISTORY_TAG, "Firebase listener status: cancelled " + error.getMessage());
+                emptyStateText.setText("Could not load history: " + error.getMessage());
+                emptyStateText.setVisibility(View.VISIBLE);
                 Toast.makeText(HistoryActivity.this, "History listener failed.", Toast.LENGTH_SHORT).show();
             }
-        });
+        };
+        historyQuery.addValueEventListener(historyListener);
     }
 
     private List<HistoryItem> readShrimpHubHistoryItems(DataSnapshot child) {
@@ -343,7 +362,7 @@ public class HistoryActivity extends BaseNavActivity {
 
     private void showTimePicker(Calendar target, boolean rangeStart) {
         MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
-                .setTimeFormat(TimeFormat.CLOCK_24H)
+                .setTimeFormat(TimeFormat.CLOCK_12H)
                 .setTitleText(rangeStart ? "Start Time" : "End Time")
                 .setHour(target.get(Calendar.HOUR_OF_DAY))
                 .setMinute(target.get(Calendar.MINUTE))
@@ -364,6 +383,9 @@ public class HistoryActivity extends BaseNavActivity {
     }
 
     private boolean isInSelectedDateRange(String timestamp) {
+        if (!dateRangeFilterEnabled) {
+            return true;
+        }
         long itemTime = TextUtilsSafe.parseTime(timestamp);
         if (itemTime <= 0L) {
             return true;
@@ -470,39 +492,6 @@ public class HistoryActivity extends BaseNavActivity {
         }
     }
 
-    private void updateFirebaseVerificationPanel(List<HistoryRecord> records) {
-        if (records.isEmpty()) {
-            verificationTimestampText.setText("Latest timestamp: --");
-            verificationTemperatureText.setText("Temperature: --");
-            verificationSalinityText.setText("TDS: --");
-            verificationTurbidityText.setText("Turbidity: --");
-            verificationWaterLevelText.setText("Water Level: --");
-            return;
-        }
-        HistoryRecord latest = records.get(records.size() - 1);
-        String timestamp = latest.timestamp;
-        verificationTimestampText.setText("Latest timestamp: " + formatVerificationTimestamp(timestamp));
-        verificationTemperatureText.setText("Temperature: " + formatVerificationValue(latest.temperature, "C"));
-        verificationSalinityText.setText("TDS: " + formatVerificationValue(latest.salinity, "ppt"));
-        verificationTurbidityText.setText("Turbidity: " + formatVerificationValue(latest.turbidity, "NTU"));
-        verificationWaterLevelText.setText("Water Level: " + formatVerificationValue(latest.waterLevel, "ft"));
-    }
-
-    private String formatVerificationTimestamp(String timestamp) {
-        long millis = TextUtilsSafe.parseTime(timestamp);
-        if (millis <= 0L) {
-            return timestamp == null ? "--" : timestamp;
-        }
-        return verificationFormat.format(new Date(millis));
-    }
-
-    private String formatVerificationValue(Float value, String unit) {
-        if (value == null) {
-            return "--";
-        }
-        return String.format(Locale.US, "%.1f %s", value, unit);
-    }
-
     private void renderChartGroup(TextView labelView, LineChart chart, List<Entry> entries, String label, String parameter, int colorRes) {
         boolean visible = "all".equals(selectedParameter) || parameter.equals(selectedParameter);
         labelView.setVisibility(visible ? View.VISIBLE : View.GONE);
@@ -531,6 +520,32 @@ public class HistoryActivity extends BaseNavActivity {
         chart.invalidate();
     }
 
+    private void updateFirebaseVerificationPanel(List<HistoryRecord> records) {
+        if (records.isEmpty()) {
+            verificationTimestampText.setText("Latest timestamp: --");
+            verificationTemperatureText.setText("Temperature: --");
+            verificationSalinityText.setText("TDS: --");
+            verificationTurbidityText.setText("Turbidity: --");
+            verificationWaterLevelText.setText("Water Level: --");
+            return;
+        }
+        HistoryRecord latest = records.get(records.size() - 1);
+        verificationTimestampText.setText("Latest timestamp: " + formatVerificationTimestamp(latest.timestamp));
+        verificationTemperatureText.setText("Temperature: " + formatVerificationValue(latest.temperature, "C"));
+        verificationSalinityText.setText("TDS: " + formatVerificationValue(latest.salinity, "ppt"));
+        verificationTurbidityText.setText("Turbidity: " + formatVerificationValue(latest.turbidity, "NTU"));
+        verificationWaterLevelText.setText("Water Level: " + formatVerificationValue(latest.waterLevel, "cm"));
+    }
+
+    private String formatVerificationTimestamp(String timestamp) {
+        long millis = TextUtilsSafe.parseTime(timestamp);
+        return millis <= 0L ? (timestamp == null ? "--" : timestamp) : verificationFormat.format(new Date(millis));
+    }
+
+    private String formatVerificationValue(Float value, String unit) {
+        return value == null ? "--" : String.format(Locale.US, "%.1f %s", value, unit);
+    }
+
     private String timestampRange(List<HistoryRecord> records) {
         if (records.isEmpty()) {
             return "none";
@@ -552,6 +567,14 @@ public class HistoryActivity extends BaseNavActivity {
             return "--";
         }
         return records.get(records.size() - 1).timestamp;
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (historyQuery != null && historyListener != null) {
+            historyQuery.removeEventListener(historyListener);
+        }
+        super.onDestroy();
     }
 
     private static class TextUtilsSafe {

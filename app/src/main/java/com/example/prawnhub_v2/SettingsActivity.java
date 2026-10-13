@@ -367,7 +367,8 @@ public class SettingsActivity extends BaseNavActivity {
             int hour = Integer.parseInt(parts[0]);
             int minute = Integer.parseInt(parts[1]);
             int interval = Integer.parseInt(feedIntervalInput.getText().toString());
-            return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 && interval >= 1 && interval <= 24;
+            if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || interval < 1 || interval > 24) return false;
+            return true;
         } catch (NumberFormatException ignored) { return false; }
     }
 

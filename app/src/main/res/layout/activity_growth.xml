@@ -57,30 +57,30 @@
                     android:max="100"
                     android:progress="0"
                     app:indicatorColor="@color/brand_primary"
-                    app:indicatorSize="144dp"
                     app:trackColor="@color/brand_primary_soft"
+                    app:indicatorSize="144dp"
                     app:trackThickness="12dp" />
 
                 <TextView
                     android:id="@+id/scoreText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:gravity="center"
                     android:text="Growth Progress: Unavailable"
                     android:textColor="@color/brand_primary_dark"
-                    android:textSize="26sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/daysText"
+                    android:id="@+id/mlPredictionText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="4dp"
                     android:gravity="center"
-                    android:text="Growth Progress: Not Started"
+                    android:text="ML prediction unavailable: no trained model configured."
                     android:textColor="@color/text_secondary"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <TextView
@@ -119,6 +119,16 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/card_background"
                 android:text="Culture Days: Not Started"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/remainingDaysText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/card_background"
+                android:text="Remaining Days: Unavailable"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 
@@ -180,6 +190,16 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/card_background"
                 android:text="Turbidity: 0 NTU - Normal (initializing)"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/waterLevelConditionText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/card_background"
+                android:text="Water Level: Unavailable"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 
