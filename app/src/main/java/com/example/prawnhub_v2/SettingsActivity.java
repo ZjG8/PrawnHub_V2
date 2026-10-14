@@ -410,7 +410,7 @@ public class SettingsActivity extends BaseNavActivity {
 
     private void updateTurbidityLabel() {
         List<Float> values = turbidityLimitSlider.getValues();
-        turbidityLimitValue.setText(String.format(Locale.US, "Min: %d NTU        Max: %d NTU", Math.round(values.get(0)), Math.round(values.get(1))));
+        turbidityLimitValue.setText(String.format(Locale.US, "Min: %d        Max: %d", Math.round(values.get(0)), Math.round(values.get(1))));
     }
 
     private void updateOverflowLabel() {

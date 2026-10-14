@@ -30,7 +30,11 @@ public class DashboardActivity extends BaseNavActivity {
     private TextView feedStatusText, lastFeedText, feedAmountText, feedCountText;
     private Button feedNowButton;
     private float minTemp = 28, maxTemp = 32, minSal = 15, maxSal = 25, minTurb = 0, maxTurb = 45, overflowLimit = 5;
-    private boolean updating, previousTempAlert, previousWaterAlert, feederRunning;
+    private boolean updating, feederRunning;
+    private SensorAlertDebouncer.State temperatureAlertState = SensorAlertDebouncer.State.initial();
+    private SensorAlertDebouncer.State salinityAlertState = SensorAlertDebouncer.State.initial();
+    private SensorAlertDebouncer.State turbidityAlertState = SensorAlertDebouncer.State.initial();
+    private SensorAlertDebouncer.State waterAlertState = SensorAlertDebouncer.State.initial();
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state); setContentView(R.layout.activity_dashboard); setupBottomNav();
@@ -58,19 +62,23 @@ public class DashboardActivity extends BaseNavActivity {
         throw new IllegalArgumentException("Unsupported pump switch: " + switchId);
     }
     private void listenSettings() { database.child("settings").addValueEventListener(new ValueEventListener() {
-        @Override public void onDataChange(@NonNull DataSnapshot s) { minTemp=n(s,"min_temp",28); maxTemp=n(s,"max_temp",32); minSal=n(s,"min_sal",15); maxSal=n(s,"max_sal",25); minTurb=n(s,"min_turb",0); maxTurb=n(s,"max_turb",45); overflowLimit=n(s,"overflow_limit",5); NotificationSettings.syncFromSettings(DashboardActivity.this,s); settingsPreviewText.setText(String.format(Locale.US,"Temp %.1f–%.1f C | TDS %.0f–%.0f ppm | Turbidity %.1f–%.1f NTU",minTemp,maxTemp,minSal,maxSal,minTurb,maxTurb)); }
+        @Override public void onDataChange(@NonNull DataSnapshot s) { minTemp=n(s,"min_temp",28); maxTemp=n(s,"max_temp",32); minSal=n(s,"min_sal",15); maxSal=n(s,"max_sal",25); minTurb=n(s,"min_turb",0); maxTurb=n(s,"max_turb",45); overflowLimit=n(s,"overflow_limit",5); NotificationSettings.syncFromSettings(DashboardActivity.this,s); settingsPreviewText.setText(String.format(Locale.US,"Temp %.1f–%.1f C | Salinity %.0f–%.0f ppt | Turbidity %.1f–%.1f",minTemp,maxTemp,minSal,maxSal,minTurb,maxTurb)); }
         @Override public void onCancelled(@NonNull DatabaseError e) { Toast.makeText(DashboardActivity.this,"Settings unavailable.",Toast.LENGTH_SHORT).show(); }
     }); }
     private void listenSensors() { database.child("ShrimpHub").addValueEventListener(new ValueEventListener() {
         @Override public void onDataChange(@NonNull DataSnapshot s) { if(s.hasChild("temperature")||s.hasChild("tds")||s.hasChild("turbidity")||s.hasChild("waterLevel")) render(n(s,"temperature",0),n(s,"tds",0),n(s,"turbidity",0),n(s,"waterLevel",0)); }
         @Override public void onCancelled(@NonNull DatabaseError e) { Toast.makeText(DashboardActivity.this,"Live sensor data unavailable.",Toast.LENGTH_SHORT).show(); }
     }); }
-    private void render(float temp,float tds,float turb,float waterCm) {
-        tempText.setText(String.format(Locale.US,"%.1f C",temp)); salText.setText(String.format(Locale.US,"%.1f ppm",tds)); turbText.setText(String.format(Locale.US,"%.1f NTU",turb)); float waterFt=waterCm/30.48f; waterText.setText(String.format(Locale.US,"%.1f ft",waterFt));
-        PondConditionEvaluator.Result conditions=PondConditionEvaluator.evaluate(temp,tds,turb,waterCm,minTemp,maxTemp,minSal,maxSal,minTurb,maxTurb,overflowLimit); boolean t=conditions.temperature!=PondConditionEvaluator.Status.NORMAL, s=conditions.tds!=PondConditionEvaluator.Status.NORMAL, u=conditions.turbidity!=PondConditionEvaluator.Status.NORMAL, w=conditions.water!=PondConditionEvaluator.Status.NORMAL; card(tempCard,tempStatusText,conditionLabel(conditions.temperature,"Stable"),t,R.color.alert_red); card(salCard,salStatusText,conditionLabel(conditions.tds,"Normal"),s,R.color.alert_yellow); card(turbCard,turbStatusText,conditionLabel(conditions.turbidity,"Normal"),u,R.color.alert_red); card(waterCard,waterStatusText,conditionLabel(conditions.water,"Normal"),w,R.color.alert_yellow);
+    private void render(float temp,float salinity,float turb,float waterCm) {
+        tempText.setText(String.format(Locale.US,"%.1f C",temp)); salText.setText(String.format(Locale.US,"%.1f ppt",salinity)); turbText.setText(String.format(Locale.US,"%.1f",turb)); float waterFt=waterCm/30.48f; waterText.setText(String.format(Locale.US,"%.1f ft",waterFt));
+        PondConditionEvaluator.Result conditions=PondConditionEvaluator.evaluate(temp,salinity,turb,waterCm,minTemp,maxTemp,minSal,maxSal,minTurb,maxTurb,overflowLimit); boolean t=conditions.temperature!=PondConditionEvaluator.Status.NORMAL, s=conditions.tds!=PondConditionEvaluator.Status.NORMAL, u=conditions.turbidity!=PondConditionEvaluator.Status.NORMAL, w=conditions.water!=PondConditionEvaluator.Status.NORMAL; card(tempCard,tempStatusText,conditionLabel(conditions.temperature,"Stable"),t,R.color.alert_red); card(salCard,salStatusText,conditionLabel(conditions.tds,"Normal"),s,R.color.alert_yellow); card(turbCard,turbStatusText,conditionLabel(conditions.turbidity,"Normal"),u,R.color.alert_red); card(waterCard,waterStatusText,conditionLabel(conditions.water,"Normal"),w,R.color.alert_yellow);
         int issues=(t?1:0)+(s?1:0)+(u?1:0)+(w?1:0); pondStatusText.setText(issues==0?"Healthy":issues<3?"Monitor conditions":"Action needed"); pondStatusText.setTextColor(ContextCompat.getColor(this,issues==0?R.color.status_green:issues<3?R.color.alert_yellow:R.color.alert_red));
-        if(w&&!previousWaterAlert) NotificationHelper.showAlert(this,"PrawnHub Alert","Water level is outside the safe range.",1002); if(t&&!previousTempAlert) NotificationHelper.showAlert(this,"PrawnHub Alert","Temperature is outside the safe range.",1003); previousWaterAlert=w; previousTempAlert=t;
+        temperatureAlertState = notifyAfterConfirmation(temperatureAlertState, t, "Temperature is outside the safe range.", 1003);
+        salinityAlertState = notifyAfterConfirmation(salinityAlertState, s, "Salinity is outside the configured ppt range.", 1004);
+        turbidityAlertState = notifyAfterConfirmation(turbidityAlertState, u, "Turbidity is outside the configured range.", 1005);
+        waterAlertState = notifyAfterConfirmation(waterAlertState, w, "Water level is outside the safe range.", 1002);
     }
+    private SensorAlertDebouncer.State notifyAfterConfirmation(SensorAlertDebouncer.State state, boolean outOfRange, String message, int notificationId) { SensorAlertDebouncer.Decision decision=SensorAlertDebouncer.evaluate(state,outOfRange,2); if(decision.shouldAlert) NotificationHelper.showAlert(this,"PrawnHub Alert",message,notificationId); return decision.state; }
     private void card(LinearLayout c,TextView label,String text,boolean bad,int color) { c.setBackgroundResource(bad?R.drawable.card_alert:R.drawable.card_background); label.setText(text); label.setTextColor(ContextCompat.getColor(this,bad?color:R.color.status_green)); }
     private String conditionLabel(PondConditionEvaluator.Status status,String normal) { return status==PondConditionEvaluator.Status.NORMAL?normal:status==PondConditionEvaluator.Status.CRITICAL?"Critical":status==PondConditionEvaluator.Status.WARNING?"Warning":"Unavailable"; }
     private void listenControls() { controlRef.addValueEventListener(new ValueEventListener() { @Override public void onDataChange(@NonNull DataSnapshot s) { updating=true; try { pump1Switch.setChecked(Boolean.TRUE.equals(s.child(PumpControlMapper.firebaseKeyFor(1)).getValue(Boolean.class))); pump2Switch.setChecked(Boolean.TRUE.equals(s.child(PumpControlMapper.firebaseKeyFor(2)).getValue(Boolean.class))); pump3Switch.setChecked(Boolean.TRUE.equals(s.child(PumpControlMapper.firebaseKeyFor(3)).getValue(Boolean.class))); pump4Switch.setChecked(Boolean.TRUE.equals(s.child(PumpControlMapper.firebaseKeyFor(4)).getValue(Boolean.class))); } finally { updating=false; } } @Override public void onCancelled(@NonNull DatabaseError e) { updating=false; } }); }

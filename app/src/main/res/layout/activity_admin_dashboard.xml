@@ -254,7 +254,7 @@
                 android:orientation="vertical">
 
                 <TextView style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Turbidity" />
-                <TextView android:id="@+id/turbidityValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-- NTU" android:textColor="@color/brand_primary_dark" android:textSize="22sp" android:textStyle="bold" />
+                <TextView android:id="@+id/turbidityValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="--" android:textColor="@color/brand_primary_dark" android:textSize="22sp" android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
 

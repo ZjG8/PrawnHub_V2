@@ -125,7 +125,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="TDS"
+                        android:text="Salinity"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -135,7 +135,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:text="-- ppm"
+                        android:text="-- ppt"
                         android:textColor="@color/text_primary"
                         android:textSize="26sp"
                         android:textStyle="bold" />
@@ -172,7 +172,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:text="-- NTU"
+                        android:text="--"
                         android:textColor="@color/text_primary"
                         android:textSize="26sp"
                         android:textStyle="bold" />

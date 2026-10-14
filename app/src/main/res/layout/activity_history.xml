@@ -134,7 +134,7 @@
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="Graph Analytics" android:textColor="@color/text_primary" android:textSize="18sp" android:textStyle="bold" />
             <TextView android:id="@+id/temperatureChartLabel" style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Temperature Trend" />
             <com.github.mikephil.charting.charts.LineChart android:id="@+id/temperatureChart" android:layout_width="match_parent" android:layout_height="180dp" android:layout_marginTop="8dp" android:background="@drawable/card_background" />
-            <TextView android:id="@+id/salinityChartLabel" style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Salinity/TDS Trend" />
+            <TextView android:id="@+id/salinityChartLabel" style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Salinity Trend (ppt)" />
             <com.github.mikephil.charting.charts.LineChart android:id="@+id/salinityChart" android:layout_width="match_parent" android:layout_height="180dp" android:layout_marginTop="8dp" android:background="@drawable/card_background" />
             <TextView android:id="@+id/turbidityChartLabel" style="@style/ShrimpHubFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Turbidity Trend" />
             <com.github.mikephil.charting.charts.LineChart android:id="@+id/turbidityChart" android:layout_width="match_parent" android:layout_height="180dp" android:layout_marginTop="8dp" android:background="@drawable/card_background" />
@@ -160,7 +160,7 @@
 
                 <TextView android:id="@+id/verificationTimestampText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Latest timestamp: --" android:textColor="@color/text_primary" android:textSize="14sp" />
                 <TextView android:id="@+id/verificationTemperatureText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Temperature: --" android:textColor="@color/text_primary" android:textSize="14sp" />
-                <TextView android:id="@+id/verificationSalinityText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="TDS: --" android:textColor="@color/text_primary" android:textSize="14sp" />
+                <TextView android:id="@+id/verificationSalinityText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Salinity: --" android:textColor="@color/text_primary" android:textSize="14sp" />
                 <TextView android:id="@+id/verificationTurbidityText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Turbidity: --" android:textColor="@color/text_primary" android:textSize="14sp" />
                 <TextView android:id="@+id/verificationWaterLevelText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Water Level: --" android:textColor="@color/text_primary" android:textSize="14sp" />
             </LinearLayout>

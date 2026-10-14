@@ -106,7 +106,7 @@ public class AdminDashboardActivity extends androidx.appcompat.app.AppCompatActi
         temperatureValue.setText(String.format(Locale.US, "%.1f C", temperature));
         salinityValue.setText(String.format(Locale.US, "%.0f ppt", salinity));
         waterLevelValue.setText(String.format(Locale.US, "%.1f ft", waterLevel / 30.48f));
-        turbidityValue.setText(String.format(Locale.US, "%.0f NTU", turbidity));
+        turbidityValue.setText(String.format(Locale.US, "%.0f", turbidity));
     }
 
     private void listenToFeedingSettings() {

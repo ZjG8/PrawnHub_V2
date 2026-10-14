@@ -177,7 +177,7 @@ public class HistoryActivity extends BaseNavActivity {
                         Log.d(HISTORY_DEBUG_TAG, String.valueOf(child.getValue()));
                         Log.d(HISTORY_DEBUG_TAG, "Timestamp=" + getString(child.child("timestamp")));
                         Log.d(HISTORY_DEBUG_TAG, "Temperature=" + getString(child.child("temperature")));
-                        Log.d(HISTORY_DEBUG_TAG, "TDS=" + getString(child.child("tds")));
+                        Log.d(HISTORY_DEBUG_TAG, "Salinity=" + getString(child.child("tds")));
                         Log.d(HISTORY_DEBUG_TAG, "Turbidity=" + getString(child.child("turbidity")));
                         Log.d(HISTORY_DEBUG_TAG, "WaterLevel=" + getString(child.child("waterLevel")));
                         nextItems.addAll(readShrimpHubHistoryItems(child));
@@ -524,7 +524,7 @@ public class HistoryActivity extends BaseNavActivity {
         if (records.isEmpty()) {
             verificationTimestampText.setText("Latest timestamp: --");
             verificationTemperatureText.setText("Temperature: --");
-            verificationSalinityText.setText("TDS: --");
+            verificationSalinityText.setText("Salinity: --");
             verificationTurbidityText.setText("Turbidity: --");
             verificationWaterLevelText.setText("Water Level: --");
             return;
@@ -532,8 +532,8 @@ public class HistoryActivity extends BaseNavActivity {
         HistoryRecord latest = records.get(records.size() - 1);
         verificationTimestampText.setText("Latest timestamp: " + formatVerificationTimestamp(latest.timestamp));
         verificationTemperatureText.setText("Temperature: " + formatVerificationValue(latest.temperature, "C"));
-        verificationSalinityText.setText("TDS: " + formatVerificationValue(latest.salinity, "ppt"));
-        verificationTurbidityText.setText("Turbidity: " + formatVerificationValue(latest.turbidity, "NTU"));
+        verificationSalinityText.setText("Salinity: " + formatVerificationValue(latest.salinity, "ppt"));
+        verificationTurbidityText.setText("Turbidity: " + formatVerificationValue(latest.turbidity, ""));
         verificationWaterLevelText.setText("Water Level: " + formatVerificationValue(latest.waterLevel, "cm"));
     }
 

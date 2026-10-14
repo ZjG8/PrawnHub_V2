@@ -179,7 +179,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/card_background"
-                android:text="Salinity/TDS: 0 ppm - Normal (initializing)"
+                android:text="Salinity: 0 ppt - Normal (initializing)"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 
@@ -189,7 +189,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/card_background"
-                android:text="Turbidity: 0 NTU - Normal (initializing)"
+                android:text="Turbidity: 0 - Normal (initializing)"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 
